@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const {exec} = require('child_process');
 const fs = require('fs');
 const ws = require('ws');
 const fetch = require('node-fetch');
@@ -10,8 +10,9 @@ class Connector {
     static async connect() {
         return new Promise((resolve, reject) => {
             const regex = process.platform === 'win32' ? /"--install-directory=(.*?)"/ : /--install-directory=(.*?)( --|\n|$)/;
+            const cmd = process.platform === 'win32' ? "WMIC PROCESS WHERE name='LeagueClientUx.exe' GET CommandLine" : "ps x -o args | grep 'LeagueClientUx'";
 
-            exec("WMIC PROCESS WHERE name='LeagueClientUx.exe' GET CommandLine", (err, stdout) => {
+            exec(cmd, (err, stdout) => {
                 if (err) {
                     return reject(err);
                 }
@@ -22,7 +23,7 @@ class Connector {
                     if (err) {
                         return reject("League Client was not found.");
                     }
-                    
+
                     const [name, pid, port, token, protocol] = data.split(':');
 
                     resolve({
@@ -37,7 +38,7 @@ class Connector {
         });
     }
 
-    static async getWebsocket() {
+    static async getWebSocket() {
         return new Promise((resolve, reject) => {
             Connector.connect().then((res) => {
                 const socket = new ws(`wss://riot:${res.token}@127.0.0.1:${res.port}`, {
@@ -58,26 +59,30 @@ class Connector {
         });
     }
 
-    static async sendRequest(options) {
-        return new Promise((resolve, reject) => {
-            Connector.connect().then((res) => {
-                fetch(`${res.protocol}://127.0.0.1:${res.port}/${options.url}`, {
-                    method: options.method,
-                    body: options.bottom,
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + Buffer.from(`riot:${res.token}`).toString('base64')
-                    }
-                }).then((res) => {
-                    resolve(res.json());
-                }).catch(reject);
-            }).catch(reject)
-        });
+    static async sendRequest(options, credentials) {
+        return new Promise(async (resolve, reject) => {
+                try {
+                    const res = credentials || await Connector.connect();
+
+                    const req = await fetch(`${res.protocol}://127.0.0.1:${res.port}/${options.url}`, {
+                        method: options.method,
+                        body: typeof options.body === "undefined" ? null : JSON.stringify(options.body),
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic ' + Buffer.from(`riot:${res.token}`).toString('base64')
+                        }
+                    });
+
+                    resolve(req);
+                } catch
+                    (err) {
+                    reject(err);
+                }
+            }
+        );
     }
 
 }
-
-Connector.sendRequest({url: 'lol-summoner/v1/current-summoner', method: 'GET'}).then(console.log);
 
 module.exports = Connector;
