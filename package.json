@@ -1,0 +1,24 @@
+{
+  "name": "league-connect",
+  "version": "1.0.0",
+  "description": "Tiny package for connecting with the League Client APIs",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "start": "node ./src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/supergrecko/league-connect.git"
+  },
+  "author": "me@supergrecko.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/supergrecko/league-connect/issues"
+  },
+  "homepage": "https://github.com/supergrecko/league-connect#readme",
+  "dependencies": {
+    "ws": "^7.0.0",
+    "node-fetch": "^2.6.0"
+  }
+}
