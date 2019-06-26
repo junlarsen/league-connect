@@ -19,7 +19,7 @@ class Connector {
 
                 const path = stdout.match(regex) || [];
 
-                return fs.readFile(path[1] + 'lockfile', 'utf8', (err, data) => {
+                return fs.readFile(path[1] + '/lockfile', 'utf8', (err, data) => {
                     if (err) {
                         return reject("League Client was not found.");
                     }
@@ -38,9 +38,11 @@ class Connector {
         });
     }
 
-    static async getWebSocket() {
-        return new Promise((resolve, reject) => {
-            Connector.connect().then((res) => {
+    static async getWebSocket(credentials = null) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const res = credentials || await Connector.connect();
+
                 const socket = new ws(`wss://riot:${res.token}@127.0.0.1:${res.port}`, {
                     headers: {
                         Authorization: 'Basic ' + Buffer.from(`riot:${res.token}`).toString('base64')
@@ -53,13 +55,13 @@ class Connector {
                 });
 
                 resolve(socket);
-            }).catch((err) => {
+            } catch (err) {
                 reject(err);
-            })
+            }
         });
     }
 
-    static async sendRequest(options, credentials) {
+    static async sendRequest(options, credentials = null) {
         return new Promise(async (resolve, reject) => {
                 try {
                     const res = credentials || await Connector.connect();

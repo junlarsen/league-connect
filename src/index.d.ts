@@ -20,9 +20,9 @@ declare module 'league-connect' {
 
         static connect(): Promise<Credentials>;
 
-        static getWebSocket(): Promise<WebSocket>;
+        static getWebSocket(credentials?: Credentials): Promise<WebSocket>;
 
-        static sendRequest(options: Request, credentials: Credentials): Promise<any>;
+        static sendRequest(options: Request, credentials?: Credentials): Promise<any>;
 
     }
 
