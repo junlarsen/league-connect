@@ -1,6 +1,7 @@
 declare module 'league-connect' {
 
     import WebSocket from 'ws';
+    import { Response } from 'node-fetch';
 
     export interface Credentials {
         name: string;
@@ -16,14 +17,10 @@ declare module 'league-connect' {
         body?: any
     }
 
-    export class Connector {
-
-        static connect(): Promise<Credentials>;
-
-        static getWebSocket(credentials?: Credentials): Promise<WebSocket>;
-
-        static sendRequest(options: Request, credentials?: Credentials): Promise<any>;
-
+    export interface Connector {
+        connect(): Promise<Credentials>;
+        getWebSocket(credentials?: Credentials): Promise<WebSocket>;
+        sendRequest(options: Request, credentials?: Credentials): Promise<Response>;
     }
 
     export default Connector;
