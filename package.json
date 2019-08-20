@@ -1,11 +1,12 @@
 {
   "name": "league-connect",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Tiny package for connecting with the League Client APIs",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "scripts": {
-    "start": "node ./src/index.js"
+    "start": "node ./src/index.js",
+    "test": "npx ava"
   },
   "repository": {
     "type": "git",
