@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es5",
     "module": "commonjs",
     "strict": true,
-    "esModuleInterop": true
+    "declaration": true,
+    "esModuleInterop": true,
+    "lib": [
+      "es2016"
+    ],
+    "outDir": "./dist",
+    "allowSyntheticDefaultImports": true
   }
 }

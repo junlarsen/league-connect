@@ -1,7 +1,7 @@
 const ava = require('ava')
 const WebSocket = require('ws')
 const fetch = require('node-fetch')
-const Connector = require('../src/index')
+const Connector = require('../dist/index')
 
 ava('test grabbing credentials', async (test) => {
     const credentials = await Connector.connect()
