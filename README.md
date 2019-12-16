@@ -7,29 +7,29 @@ LeagueConnect is a basic module for connecting to the League Client APIs, heavil
 Retrieve the credentials for the API:
 
 ```js
-import Connector from 'league-connect';
+import { connect } from 'league-connect';
 
 // Extracts the entire lockfile into an object.
-const credentials = await Connector.connect();
+const credentials = await connect();
 ```
 
 Connect to the Client WebSocket:
 
 ```js
-import Connector from 'league-connect';
+import { getWebSocket } from 'league-connect';
 
-const ws = await Connector.getWebSocket();
+const ws = await getWebSocket();
 ```
 
 Send a request to any API:
 
 ````js
-import Connector from 'league-connect';
+import { connect, sendRequest } from 'league-connect';
 
-const credentials = await Connector.connect();
+const credentials = await connect();
 
 // If you're sending anything with a body, use the body field.
-const response = await Connector.sendRequest({
+const response = await sendRequest({
     url: 'lol-summoner/v1/current-summoner',
     method: 'GET'
     /* body: {} */
