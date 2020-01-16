@@ -1,10 +1,9 @@
 import fs from 'fs-extra'
 import cp from 'child_process'
 import util from 'util'
+import https from 'https'
 import WebSocket from 'ws'
 import fetch, { Response } from 'node-fetch'
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 const exec = util.promisify(cp.exec)
 
@@ -73,6 +72,9 @@ export async function sendRequest(options: Request, credentials: Credentials | n
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'Authorization': 'Basic ' + Buffer.from(`riot:${auth.token}`).toString('base64')
-    }
+    },
+    agent: new https.Agent({
+      rejectUnauthorized: false
+    })
   })
 }

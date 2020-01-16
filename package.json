@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "compile": "tsc",
-    "test": "npx ava",
+    "test": "jest",
     "prepare": "tsc"
   },
   "repository": {
@@ -20,14 +20,17 @@
   },
   "homepage": "https://github.com/supergrecko/league-connect#readme",
   "dependencies": {
-    "ava": "^2.2.0",
+    "@types/jest": "^24.9.0",
     "fs-extra": "^8.1.0",
     "node-fetch": "^2.6.0",
     "ws": "^7.0.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^8.0.1",
     "@types/node-fetch": "^2.5.0",
     "@types/ws": "^6.0.1",
-    "@types/fs-extra": "^8.0.1"
+    "jest": "^24.9.0",
+    "ts-jest": "^24.3.0",
+    "typescript": "^3.7.5"
   }
 }
