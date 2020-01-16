@@ -3,47 +3,47 @@ import { Response } from 'node-fetch'
 import * as Connector from '../src'
 
 describe('grabbing and using credentials', () => {
-    test('tests grabbing credentials', async (done) => {
-        const conn = await Connector.connect()
+  test('tests grabbing credentials', async (done) => {
+    const conn = await Connector.auth()
 
-        expect(conn).not.toBeUndefined()
+    expect(conn).not.toBeUndefined()
 
-        done()
+    done()
+  })
+
+  test('websocket also works when passing credentials', async (done) => {
+    const ws = await Connector.connect()
+    expect(ws).not.toBeUndefined()
+
+    ws.on('open', () => {
+      ws.close()
     })
 
-    test('websocket also works when passing credentials', async (done) => {
-        const ws = await Connector.getWebSocket()
-        expect(ws).not.toBeUndefined()
+    done()
+  })
 
-        ws.on('open', () => {
-            ws.close()
-        })
+  test('websocket connects correctly without credentials', async (done) => {
+    const conn = await Connector.auth()
+    const ws = await Connector.connect(conn)
 
-        done()
+    expect(ws).toBeInstanceOf(WebSocket)
+
+    ws.on('open', () => {
+      ws.close()
     })
 
-    test('websocket connects correctly without credentials', async (done) => {
-        const conn = await Connector.connect()
-        const ws = await Connector.getWebSocket(conn)
+    done()
+  })
 
-        expect(ws).toBeInstanceOf(WebSocket)
-
-        ws.on('open', () => {
-            ws.close()
-        })
-
-        done()
+  test('basic request does not result in a http error', async (done) => {
+    const res = await Connector.request({
+      method: 'POST',
+      url: 'Help'
     })
 
-    test('basic request does not result in a http error', async (done) => {
-        const res = await Connector.sendRequest({
-            method: 'POST',
-            url: 'Help'
-        })
+    expect(res).toBeInstanceOf(Response)
+    expect(res.ok).toEqual(true)
 
-        expect(res).toBeInstanceOf(Response)
-        expect(res.ok).toEqual(true)
-
-        done()
-    })
+    done()
+  })
 })
