@@ -1,14 +1,8 @@
 import WebSocket, { ClientOptions } from 'ws'
-
-export type Effect<T = any, E extends EventResponse = any> = (data: T | null, event: E) => void
-
-export interface EventResponse {
-  uri: string,
-  data: any
-}
+import { EventResponse, Effect, Dictionary } from '..'
 
 export class LeagueWebSocket extends WebSocket {
-  private subscriptions: { [key: string]: Array<Effect> } = {}
+  private subscriptions: Dictionary<Array<Effect>> = {}
 
   constructor(address: string, options: ClientOptions) {
     super(address, options)

@@ -1,8 +1,9 @@
 import fetch, { Response } from 'node-fetch'
 import https from "https"
-import { auth, Credentials, Request } from './index'
+import { auth } from '..'
+import { Request, Credentials } from '..'
 
-export async function request(options: Request, credentials: Credentials | null = null): Promise<Response> {
+export async function request(options: Request, credentials?: Credentials | undefined): Promise<Response> {
   const creds = credentials || await auth()
 
   return fetch(`${creds.protocol}://127.0.0.1:${creds.port}/${options.url}`, {

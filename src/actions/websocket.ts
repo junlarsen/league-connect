@@ -1,10 +1,10 @@
-import WebSocket from 'ws'
-import { auth, Credentials } from './index'
+import { auth, Credentials } from '..'
+import { LeagueWebSocket } from '..'
 
-export async function connect(credentials: Credentials | null = null): Promise<WebSocket> {
+export async function connect(credentials: Credentials | null = null): Promise<LeagueWebSocket> {
   const creds = credentials || await auth()
 
-  const socket = new WebSocket(`wss://riot:${creds.token}@127.0.0.1:${creds.port}`, {
+  const socket = new LeagueWebSocket(`wss://riot:${creds.token}@127.0.0.1:${creds.port}`, {
     headers: {
       Authorization: 'Basic ' + Buffer.from(`riot:${creds.token}`).toString('base64')
     },
