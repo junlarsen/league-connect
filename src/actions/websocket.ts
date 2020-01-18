@@ -1,7 +1,7 @@
 import { auth, Credentials } from '..'
 import { LeagueWebSocket } from '..'
 
-export async function connect(credentials: Credentials | null = null): Promise<LeagueWebSocket> {
+export async function connect(credentials: Credentials | undefined = undefined): Promise<LeagueWebSocket> {
   const creds = credentials || await auth()
 
   const socket = new LeagueWebSocket(`wss://riot:${creds.token}@127.0.0.1:${creds.port}`, {

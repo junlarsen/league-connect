@@ -1,4 +1,3 @@
-import WebSocket from 'ws'
 import { Response } from 'node-fetch'
 import * as Connector from '../src'
 
@@ -26,7 +25,7 @@ describe('grabbing and using credentials', () => {
     const conn = await Connector.auth()
     const ws = await Connector.connect(conn)
 
-    expect(ws).toBeInstanceOf(WebSocket)
+    expect(ws).toBeInstanceOf(Connector.LeagueWebSocket)
 
     ws.on('open', () => {
       ws.close()

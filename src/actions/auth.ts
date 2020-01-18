@@ -10,7 +10,7 @@ export async function auth(): Promise<Credentials> {
   const cmd = process.platform === 'win32' ? 'WMIC PROCESS WHERE name=\'LeagueClientUx.exe\' GET CommandLine' : 'ps x -o args | grep \'LeagueClientUx\''
 
   const { stdout } = await exec(cmd)
-  const [path] = stdout.match(re) || []
+  const [_, path] = stdout.match(re) || []
 
   try {
     const content = await fs.readFile(`${path}/lockfile`, 'utf8')
