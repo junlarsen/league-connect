@@ -1,37 +1,69 @@
 # LeagueConnect
 
-LeagueConnect is a basic module for connecting to the League Client APIs, heavily inspired by LCU-Connector by Pupix.
+LeagueConnect is a NodeJS module for connecting and consuming to the League Client APIs with an enhanced websocket experience.
+
+## Installing
+
+LeagueConnect is distributed via NPM.
+
+```bash
+npm i league-connect
+yarn add league-connect
+```
 
 ## Usage
 
-Retrieve the credentials for the API:
+LeagueConnect is split into three modules, authentication, requesting and websockets
 
-```js
-import { connect } from 'league-connect';
+**Retrieve the API credentials**
 
-// Extracts the entire lockfile into an object.
-const credentials = await connect();
+```typescript
+import { auth } from 'league-connect'
+
+const credentials = await auth()
+// {
+//   name: "LeagueClient",
+//   pid: 22976,
+//   port: 60432
+//   token: "50RB_U6QTOc7VryhdRUMzA"
+//   protocol: "https"
+// }
 ```
 
-Connect to the Client WebSocket:
+**Send a Request to the API**
 
-```js
-import { getWebSocket } from 'league-connect';
+```typescript
+import { auth, request } from 'league-connect'
 
-const ws = await getWebSocket();
+const credentials = await auth()
+const response = await request({
+  url: 'lol-summoner/v1/current-summoner',
+  method: 'GET',
+  /* body: {} */
+}, credentials)
 ```
 
-Send a request to any API:
+**Connect to the WebSocket**
 
-````js
-import { connect, sendRequest } from 'league-connect';
+LeagueConnect wraps around the regular WebSocket object, providing subscribe and unsubscribe methods for endpoints.
 
-const credentials = await connect();
+```typescript
+import { auth, connect } from 'league-connect'
 
-// If you're sending anything with a body, use the body field.
-const response = await sendRequest({
-    url: 'lol-summoner/v1/current-summoner',
-    method: 'GET'
-    /* body: {} */
-}, credentials);
+const credentials = await auth()
+const websocket = await connect(credentials)
+
+// Use it like a regular websocket
+websocket.on('message', data => {
+  
+})
+
+// Subscribe to an endpoint
+// You can subscribe multiple times to the same endpoint.
+websocket.subscribe('/lol-chat/v1/conversations/active', (data, event) => {
+  // data is the event payload, event contains the entire event
+})
+
+// Unsubscribe from path
+websocket.unsubscribe('/lol-chat/v1/conversations/active')
 ```
