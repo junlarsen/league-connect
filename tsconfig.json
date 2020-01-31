@@ -6,9 +6,12 @@
     "declaration": true,
     "esModuleInterop": true,
     "lib": [
-      "es2016"
+      "es2016",
+      "dom"
     ],
+    "rootDir": "./src",
     "outDir": "./dist",
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["node_modules", "dist"]
 }

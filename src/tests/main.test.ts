@@ -1,5 +1,5 @@
 import { Response } from 'node-fetch'
-import * as Connector from '../src'
+import * as Connector from '../index'
 
 describe('grabbing and using credentials', () => {
   describe('finding credentials', () => {
