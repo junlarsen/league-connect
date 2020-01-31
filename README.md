@@ -37,7 +37,7 @@ import { auth, request } from 'league-connect'
 
 const credentials = await auth()
 const response = await request({
-  url: 'lol-summoner/v1/current-summoner',
+  url: '/lol-summoner/v1/current-summoner',
   method: 'GET',
   /* body: {} */
 }, credentials)
