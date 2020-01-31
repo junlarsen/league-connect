@@ -1,5 +1,5 @@
-import { auth, Credentials } from '..'
-import { LeagueWebSocket } from '..'
+import { auth, Credentials } from './index'
+import { LeagueWebSocket } from './index'
 
 export async function connect(credentials: Credentials | undefined = undefined): Promise<LeagueWebSocket> {
   const creds = credentials || await auth()
