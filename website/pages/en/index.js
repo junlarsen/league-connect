@@ -95,16 +95,16 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'This is the content of my feature',
+            content: 'LeagueConnect is open source and free, MIT Licensed',
             image: `${baseUrl}img/undraw_code_review.svg`,
             imageAlign: 'top',
-            title: 'Feature One',
+            title: 'Open Source',
           },
           {
-            content: 'The content of my second feature',
+            content: 'LeagueConnect is built with ES6 Promises allowing usage of async/await',
             image: `${baseUrl}img/undraw_operating_system.svg`,
             imageAlign: 'top',
-            title: 'Feature Two',
+            title: 'Promise Based',
           },
         ]}
       </Block>

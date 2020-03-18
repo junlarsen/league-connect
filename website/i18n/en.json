@@ -3,7 +3,7 @@
   "localized-strings": {
     "next": "Next",
     "previous": "Previous",
-    "tagline": "Documentation for the league-connect Node Module",
+    "tagline": "Modern, Promise based module for consuming the League Client APIs",
     "docs": {
       "api": {
         "title": "API Reference",
