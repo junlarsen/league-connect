@@ -6,7 +6,8 @@
     "tagline": "Documentation for the league-connect Node Module",
     "docs": {
       "api": {
-        "title": "This is document number 3"
+        "title": "API Reference",
+        "sidebar_label": "API Reference"
       },
       "docs": {
         "title": "Latin-ish",
