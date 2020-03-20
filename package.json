@@ -22,7 +22,7 @@
   "homepage": "https://github.com/supergrecko/league-connect#readme",
   "dependencies": {
     "@types/jest": "^25.1.2",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^9.0.0",
     "node-fetch": "^2.6.0",
     "ws": "^7.0.0"
   },
