@@ -2,14 +2,9 @@ import fs from 'fs-extra'
 import cp from 'child_process'
 import util from 'util'
 import { Credentials } from './index'
+import { winFlagsRe, unixFlagsRe, winCmd, unixCmd } from '../shared/types'
 
 const exec = util.promisify(cp.exec)
-
-const winFlagsRe = /"--install-directory=(.*?)"/
-const winCmd = 'WMIC PROCESS WHERE name=\'LeagueClientUx.exe\' GET CommandLine'
-
-const unixFlagsRe = /--install-directory=(.*?)( --|\n|$)/
-const unixCmd = 'ps x -o args | grep \'LeagueClientUx\''
 
 /**
  * Get the credentials for the league client
@@ -41,6 +36,6 @@ export async function authenticate(): Promise<Credentials> {
       name
     }
   } catch {
-    throw Error('League Client could not be located.')
+    throw new Error('League Client could not be located.')
   }
 }

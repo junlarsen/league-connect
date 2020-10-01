@@ -9,7 +9,6 @@
       "es2016",
       "dom"
     ],
-    "rootDir": "node",
     "outDir": "dist",
     "allowSyntheticDefaultImports": true
   },

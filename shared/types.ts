@@ -64,3 +64,9 @@ export interface EventResponse<T = any> {
    */
   data: T
 }
+
+export const winFlagsRe = /"--install-directory=(.*?)"/
+export const winCmd = 'WMIC PROCESS WHERE name=\'LeagueClientUx.exe\' GET CommandLine'
+
+export const unixFlagsRe = /--install-directory=(.*?)( --|\n|$)/
+export const unixCmd = 'ps x -o args | grep \'LeagueClientUx\''
