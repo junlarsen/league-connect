@@ -1,6 +1,6 @@
 {
   "name": "league-connect",
-  "version": "2.0.1",
+  "version": "3.0.0-beta",
   "description": "Tiny package for connecting with the League Client APIs",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -21,12 +21,13 @@
   },
   "homepage": "https://github.com/supergrecko/league-connect#readme",
   "dependencies": {
-    "@types/jest": "^25.1.2",
     "fs-extra": "^9.0.0",
     "node-fetch": "^2.6.0",
     "ws": "^7.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^25.1.2",
+    "@types/node": "^14.11.2",
     "@types/fs-extra": "^8.0.1",
     "@types/node-fetch": "^2.5.0",
     "@types/ws": "^7.2.1",

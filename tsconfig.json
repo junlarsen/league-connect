@@ -9,8 +9,8 @@
       "es2016",
       "dom"
     ],
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "rootDir": "node",
+    "outDir": "dist",
     "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules", "dist"]
