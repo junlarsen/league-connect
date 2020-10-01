@@ -2,7 +2,7 @@ import fetch, { Response } from 'node-fetch'
 import https from "https"
 import { authenticate } from './authenticate'
 import { Request, Credentials } from './index'
-import { trimSlashes } from './utils'
+import { trimSlashes } from '../shared/utils'
 
 /**
  * Send a http request to an endpoint of the league client rest api
@@ -14,7 +14,7 @@ import { trimSlashes } from './utils'
  */
 export async function request(
   options: Request,
-  credentials?: Credentials | undefined
+  credentials?: Credentials | undefined = undefined
 ): Promise<Response> {
   const _credentials = credentials || await authenticate()
   const uri = trimSlashes(options.url)

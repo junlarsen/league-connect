@@ -1,6 +1,6 @@
 import WebSocket, { ClientOptions } from 'ws'
 import { EventResponse, Effect } from './index'
-import { trimSlashes } from './utils'
+import { trimSlashes } from '../shared/utils'
 
 /**
  * A wrapper class for a websocket connection to the league client
