@@ -4,7 +4,7 @@ import * as Connector from '../index'
 describe('grabbing and using credentials', () => {
   describe('finding credentials', () => {
     test('tests grabbing credentials', async (done) => {
-      const conn = await Connector.auth()
+      const conn = await Connector.authenticate()
 
       expect(conn).not.toBeUndefined()
 
@@ -51,7 +51,7 @@ describe('grabbing and using credentials', () => {
     })
 
     test('websocket connects correctly without credentials', async (done) => {
-      const conn = await Connector.auth()
+      const conn = await Connector.authenticate()
       const ws = await Connector.connect(conn)
 
       expect(ws).toBeInstanceOf(Connector.LeagueWebSocket)
@@ -66,7 +66,7 @@ describe('grabbing and using credentials', () => {
 
   describe('subscribing to the websocket', () => {
     test('subscription with slashes url works', async (done) => {
-      const conn = await Connector.auth()
+      const conn = await Connector.authenticate()
       const ws = await Connector.connect(conn)
 
       ws.on('open', () => {
@@ -81,7 +81,7 @@ describe('grabbing and using credentials', () => {
     })
 
     test('subscribing multiple times works as well', async (done) => {
-      const conn = await Connector.auth()
+      const conn = await Connector.authenticate()
       const ws = await Connector.connect(conn)
 
       ws.on('open', () => {
@@ -99,7 +99,7 @@ describe('grabbing and using credentials', () => {
     })
 
     test('subscribing with non-slash prefixed path works', async (done) => {
-      const conn = await Connector.auth()
+      const conn = await Connector.authenticate()
       const ws = await Connector.connect(conn)
 
       ws.on('open', () => {

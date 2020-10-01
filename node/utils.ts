@@ -1,5 +1,6 @@
-// Remove all existing prepending slashes
-// and add one at the beginning
+/**
+ * @internal
+ */
 export function trimSlashes(input: string) {
   let result = input
 
