@@ -1,0 +1,32 @@
+{
+  "name": "league-connect",
+  "version": "5.0.0-beta1",
+  "description": "Module for consuming the League of Legends Client APIs",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "compile": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/supergrecko/league-connect.git"
+  },
+  "author": "me@supergrecko.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/supergrecko/league-connect/issues"
+  },
+  "homepage": "https://github.com/supergrecko/league-connect#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "ws": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.15",
+    "@types/node": "^14.14.7",
+    "@types/ws": "^7.4.0",
+    "typescript": "^4.1.1-rc",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.4.4"
+  }
+}
