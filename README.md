@@ -5,8 +5,6 @@
   <p align="center">
     Module for consume the League of Legends Client APIs
     <br />
-    <a href="https://github.com/supergrecko/league-connect">View Demo</a>
-    |
     <a href="https://github.com/supergrecko/league-connect/issues">Report Bug</a>
     |
     <a href="https://github.com/supergrecko/league-connect/issues">Request Feature</a>
@@ -49,11 +47,12 @@ $ npm install league-connect
 
 ## Usage
 
-League Connect ships 3 primary APIs:
+League Connect ships 4 primary APIs:
 
 - [`authenticate`: Fetch credentials to the Client APIs](#authenticate)
 - [`connect`: Attach to the Client WebSocket](#connect)
-- [`request`: Send HTTP requests to Client API endpoints](#request):
+- [`request`: Send HTTP requests to Client API endpoints](#request)
+- [`LeagueClient`: Listen for League Client shutdown/startups](#leagueclient)
 
 ### Authenticate
 
@@ -160,6 +159,52 @@ The options you pass into `request` decide where your http request goes. Availab
 
 ###### [See source for available options][request]
 
+### LeagueClient
+
+The LeagueClient class is an EventEmitter which will listen for the LeagueClientUx process, 
+reporting shutdown/startup of the application. The emitter has two listeners: `connect` and
+`disconnect`.
+
+**Code Example**
+
+```js
+import { authenticate, LeagueClient } from 'league-connect'
+
+const credentials = await authenticate()
+const client = new LeagueClient(credentials)
+
+client.on('connect', (newCredentials) => {
+  // newCredentials: Each time the Client is started, new credentials are made
+  // this variable contains the new credentials.
+})
+
+client.on('disconnect', () => {
+
+})
+
+client.start() // Start listening for process updates
+client.stop()  // Stop listening for process updates
+```
+
+By default, the LeagueClient class will check for a client connection/disconnection
+every 2.5 seconds. This can be changed by passing an options object into the
+constructor.
+
+| Option | Default Value | Description |
+|--------|---------------|-------------|
+| pollInterval | `2500` | Duration in milliseconds between process existence check |
+
+```js
+import { authenticate, LeagueClient } from 'league-connect'
+
+const credentials = await authenticate()
+const client = new LeagueClient(credentials, {
+  pollInterval: 1000 // Check every second
+})
+```
+
+######  [See source for available options][leagueclient]
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
@@ -174,3 +219,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [websocket]: https://github.com/supergrecko/league-connect/blob/master/src/websocket.ts#L25
 [riftexplorer]: https://github.com/Pupix/rift-explorer
 [request]: https://github.com/supergrecko/league-connect/blob/master/src/request.ts#L5
+[leagueclient]: https://github.com/supergrecko/league-connect/blob/master/src/client.ts#L13
