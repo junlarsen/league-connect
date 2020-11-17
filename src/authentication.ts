@@ -12,6 +12,10 @@ export interface Credentials {
    * The password for the LCU API
    */
   password: string
+  /**
+   * The system process id for the LeagueClientUx process
+   */
+  pid: number
 }
 
 export interface AuthenticationOptions {
@@ -66,6 +70,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
   async function tryAuthenticate() {
     const portRegex = /--app-port=([0-9]+)/
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
+    const pidRegex = /--app-pid=([0-9]+)/
+
     const command = process.platform === 'win32'
       ? 'WMIC PROCESS WHERE name=\'LeagueClientUx.exe\' GET CommandLine'
       : 'ps x -o args | grep \'LeagueClientUx\''
@@ -74,10 +80,12 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const { stdout } = await exec(command)
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
+      const [, pid] = stdout.match(pidRegex)!
 
       return {
         port: Number(port),
-        password
+        pid: Number(pid),
+        password,
       }
     } catch {
       throw new ClientNotFoundError()
