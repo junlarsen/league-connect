@@ -1,6 +1,6 @@
 {
   "name": "league-connect",
-  "version": "5.0.0-beta4",
+  "version": "5.0.0",
   "description": "Module for consuming the League of Legends Client APIs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,5 +31,5 @@
     "jest": "^26.6.3",
     "ts-jest": "^26.4.4"
   },
-  "keywords": []
+  "keywords": ["league of legends", "league client apis", "lcu", "riot games"]
 }
