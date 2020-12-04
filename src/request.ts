@@ -53,7 +53,7 @@ export async function request<T = any, R = any>(
 
   const response = await fetch(url, {
     method: options.method,
-    body: hasBody ? undefined : JSON.stringify(options.body),
+    body: hasBody ? JSON.stringify(options.body) : undefined,
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
