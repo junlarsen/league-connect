@@ -1,6 +1,6 @@
 {
   "name": "league-connect",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Module for consuming the League of Legends Client APIs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
