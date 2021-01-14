@@ -15,7 +15,7 @@ describe('league client adapter', () => {
 
   // Manual test
   // TODO: automatic spawn/respawn of client
-  test.skip('it detects connection loss/regain', async (done) => {
+  test('it detects connection loss/regain', async (done) => {
     const credentials = await authenticate()
     const client = new LeagueClient(credentials)
 

@@ -5,6 +5,8 @@ import {
   Credentials
 } from './authentication'
 
+const DEFAULT_POLL_INTERVAL = 2500
+
 export declare interface LeagueClient {
   on(event: 'connect', callback: (credentials: Credentials) => void): this
   on(event: 'disconnect', callback: () => void): this
@@ -69,17 +71,20 @@ export class LeagueClient extends EventEmitter {
           // Process still lives, queue onTick
           setTimeout(() => {
             this.onTick()
-          }, this.options?.pollInterval ?? 2500)
+          }, this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL)
         }
       } else {
         // Current credentials were invalidated, wait for
         // client to come back up
         const credentials = await authenticate({
           awaitConnection: true,
-          pollInterval: this.options?.pollInterval ?? 2500
+          pollInterval: this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL
         })
         this.credentials = credentials
         this.emit('connect', credentials)
+        setTimeout(() => {
+          this.onTick()
+        }, this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL)
       }
     }
   }

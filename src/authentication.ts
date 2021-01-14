@@ -3,6 +3,8 @@ import util from 'util'
 
 const exec = util.promisify(cp.exec)
 
+const DEFAULT_POLL_INTERVAL = 2500
+
 export interface Credentials {
   /**
    * The system port the LCU API is running on
@@ -104,7 +106,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       tryAuthenticate().then((result) => {
         resolve(result)
       }).catch((_) => {
-        setTimeout(self, options?.pollInterval ?? 2500, resolve, reject)
+        setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
       })
     })
   } else {
