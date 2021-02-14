@@ -45,7 +45,7 @@ export class LeagueWebSocket extends WebSocket {
             cb(res.data, res)
           })
         }
-      } catch { }
+      } catch {}
     })
   }
 
@@ -66,9 +66,7 @@ export class LeagueWebSocket extends WebSocket {
   }
 }
 
-export async function connect(
-  credentials: Credentials
-): Promise<LeagueWebSocket> {
+export async function connect(credentials: Credentials): Promise<LeagueWebSocket> {
   const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
 
   return new LeagueWebSocket(url, {

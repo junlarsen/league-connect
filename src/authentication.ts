@@ -74,9 +74,10 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
     const pidRegex = /--app-pid=([0-9]+)/
 
-    const command = process.platform === 'win32'
-      ? 'WMIC PROCESS WHERE name=\'LeagueClientUx.exe\' GET CommandLine'
-      : 'ps x -o args | grep \'LeagueClientUx\''
+    const command =
+      process.platform === 'win32'
+        ? "WMIC PROCESS WHERE name='LeagueClientUx.exe' GET CommandLine"
+        : "ps x -o args | grep 'LeagueClientUx'"
 
     try {
       const { stdout } = await exec(command)
@@ -87,7 +88,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       return {
         port: Number(port),
         pid: Number(pid),
-        password,
+        password
       }
     } catch {
       throw new ClientNotFoundError()
@@ -103,11 +104,13 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     // Poll until a client is found, attempting to resolve every
     // `options.pollInterval` milliseconds
     return new Promise(function self(resolve, reject) {
-      tryAuthenticate().then((result) => {
-        resolve(result)
-      }).catch((_) => {
-        setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
-      })
+      tryAuthenticate()
+        .then((result) => {
+          resolve(result)
+        })
+        .catch((_) => {
+          setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
+        })
     })
   } else {
     return tryAuthenticate()

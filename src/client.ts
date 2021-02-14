@@ -1,9 +1,5 @@
 import { EventEmitter } from 'events'
-import {
-  authenticate,
-  ClientNotFoundError,
-  Credentials
-} from './authentication'
+import { authenticate, ClientNotFoundError, Credentials } from './authentication'
 
 const DEFAULT_POLL_INTERVAL = 2500
 
@@ -27,7 +23,7 @@ export class LeagueClient extends EventEmitter {
   public credentials?: Credentials = undefined
 
   constructor(credentials: Credentials, public options?: LeagueClientOptions) {
-    super();
+    super()
     this.credentials = credentials
   }
 
@@ -95,7 +91,7 @@ function processExists(pid: number): boolean {
     // `man 1 kill`: if sig is 0, then no signal is sent, but error checking
     // is still performed.
     return process.kill(pid, 0)
-  } catch(err) {
+  } catch (err) {
     return err.code === 'EPERM'
   }
 }

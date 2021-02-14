@@ -25,7 +25,7 @@ describe('connecting to the client websocket', () => {
     expect(socket.subscriptions.get('/_test')).toHaveLength(2)
 
     // simulate emit
-    socket.subscriptions.get('/_test')?.forEach(it => {
+    socket.subscriptions.get('/_test')?.forEach((it) => {
       it(null, {} as EventResponse)
     })
 

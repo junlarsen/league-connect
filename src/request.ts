@@ -10,12 +10,7 @@ export interface RequestOptions<T = any> {
   /**
    * Http verb to use for request
    */
-  method:
-    | 'GET'
-    | 'POST'
-    | 'PUT'
-    | 'PATCH'
-    | 'DELETE'
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   /**
    * Optionally a body to pass to PUT/PATCH/POST/DELETE. This is typically
    * an object type as the library will parse this into JSON and send along
@@ -30,7 +25,7 @@ export interface RequestOptions<T = any> {
  */
 export class Response<T> extends FetchResponse {
   constructor(parent: FetchResponse) {
-    super(parent.body, parent);
+    super(parent.body, parent)
   }
 
   /**
@@ -55,9 +50,9 @@ export async function request<T = any, R = any>(
     method: options.method,
     body: hasBody ? JSON.stringify(options.body) : undefined,
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Basic ' + Buffer.from(`riot:${credentials?.password}`).toString('base64')
+      Authorization: 'Basic ' + Buffer.from(`riot:${credentials?.password}`).toString('base64')
     },
     agent: new https.Agent({
       rejectUnauthorized: false
