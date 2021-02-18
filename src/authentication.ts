@@ -101,8 +101,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         port: Number(port),
         pid: Number(pid),
         password,
-        certificate:
-          options?.certificate || (await fs.readFile(`${path.join(__dirname, '..', 'riotgames.pem')}`, 'utf8'))
+        certificate: options?.certificate || (await fs.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf8'))
       }
     } catch {
       throw new ClientNotFoundError()
