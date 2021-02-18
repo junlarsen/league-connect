@@ -1,4 +1,6 @@
+import fs from 'fs/promises'
 import cp from 'child_process'
+import path from 'path'
 import util from 'util'
 
 const exec = util.promisify(cp.exec)
@@ -18,6 +20,10 @@ export interface Credentials {
    * The system process id for the LeagueClientUx process
    */
   pid: number
+  /**
+   * Riot Games' self-signed root certificate (contents of .pem)
+   */
+  certificate: string
 }
 
 export interface AuthenticationOptions {
@@ -35,6 +41,12 @@ export interface AuthenticationOptions {
    * Default: 2500
    */
   pollInterval?: number
+  /**
+   * Riot Games' self-signed root certificate (contents of .pem)
+   *
+   * Default: version of certificate bundled in package
+   */
+  certificate?: string
 }
 
 /**
@@ -88,7 +100,9 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       return {
         port: Number(port),
         pid: Number(pid),
-        password
+        password,
+        certificate:
+          options?.certificate || (await fs.readFile(`${path.join(__dirname, '..', 'riotgames.pem')}`, 'utf8'))
       }
     } catch {
       throw new ClientNotFoundError()

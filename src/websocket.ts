@@ -1,3 +1,4 @@
+import https from 'https'
 import WebSocket, { ClientOptions } from 'ws'
 import { Credentials } from './authentication'
 
@@ -73,7 +74,9 @@ export async function connect(credentials: Credentials): Promise<LeagueWebSocket
     headers: {
       Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
     },
-    rejectUnauthorized: false
+    agent: new https.Agent({
+      ca: credentials?.certificate
+    })
   })
 }
 

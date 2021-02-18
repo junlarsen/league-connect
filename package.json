@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublishOnly": "yarn compile",
-    "compile": "yarn fmt && tsc",
+    "cert": "nugget https://static.developer.riotgames.com/docs/lol/riotgames.pem",
+    "compile": "yarn fmt && tsc && yarn cert",
     "fmt": "prettier --config .prettierrc src/ jest.config.js --write"
   },
   "repository": {
@@ -29,6 +30,7 @@
     "@types/jest": "^26.0.15",
     "@types/node": "^14.14.7",
     "jest": "^26.6.3",
+    "nugget": "^2.0.1",
     "prettier": "^2.2.1",
     "ts-jest": "^26.4.4",
     "typescript": "^4.1.1-rc"
