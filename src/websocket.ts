@@ -74,7 +74,9 @@ export async function connect(credentials: Credentials): Promise<LeagueWebSocket
     headers: {
       Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
     },
-    agent: new https.Agent({
+    agent: new https.Agent(typeof credentials?.certificate === 'undefined' ? {
+      rejectUnauthorized: false
+    } : {
       ca: credentials?.certificate
     })
   })

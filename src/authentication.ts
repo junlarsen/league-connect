@@ -21,9 +21,10 @@ export interface Credentials {
    */
   pid: number
   /**
-   * Riot Games' self-signed root certificate (contents of .pem)
+   * Riot Games' self-signed root certificate (contents of .pem). If
+   * it is `undefined` then unsafe authentication will be used.
    */
-  certificate: string
+  certificate?: string
 }
 
 export interface AuthenticationOptions {
@@ -47,6 +48,12 @@ export interface AuthenticationOptions {
    * Default: version of certificate bundled in package
    */
   certificate?: string
+  /**
+   * Do not authenticate requests with Riot Games' self-signed root certificate
+   * 
+   * Default: true if `certificate` is `undefined` 
+   */
+  unsafe?: boolean
 }
 
 /**
@@ -96,12 +103,13 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!
+      const unsafe = options?.unsafe || typeof options?.unsafe === 'undefined'
 
       return {
         port: Number(port),
         pid: Number(pid),
         password,
-        certificate: options?.certificate || (await fs.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf8'))
+        certificate: options?.certificate || (unsafe ? undefined : await fs.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf8'))
       }
     } catch {
       throw new ClientNotFoundError()

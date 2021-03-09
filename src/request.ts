@@ -54,7 +54,9 @@ export async function request<T = any, R = any>(
       'Content-Type': 'application/json',
       Authorization: 'Basic ' + Buffer.from(`riot:${credentials?.password}`).toString('base64')
     },
-    agent: new https.Agent({
+    agent: new https.Agent(typeof credentials?.certificate === 'undefined' ? {
+      rejectUnauthorized: false
+    } : {
       ca: credentials?.certificate
     })
   })
