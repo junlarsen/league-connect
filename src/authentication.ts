@@ -1,4 +1,4 @@
-import fs from 'fs/promises'
+import fs from 'fs'
 import cp from 'child_process'
 import path from 'path'
 import util from 'util'
@@ -88,6 +88,8 @@ export class ClientNotFoundError extends Error {
  * windows/linux/darwin
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
+  const RIOT_GAMES_CERT = await fs.promises.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf-8')
+
   async function tryAuthenticate() {
     const portRegex = /--app-port=([0-9]+)/
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
@@ -103,15 +105,24 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!
-      const unsafe = options?.unsafe || typeof options?.unsafe === 'undefined'
+      const unsafe = options?.unsafe === true
+      const hasCert = options?.certificate !== undefined
+
+      // See flow chart for this here: https://github.com/supergrecko/league-connect/pull/44#issuecomment-790384881
+      // If user specifies certificate, use it
+      const certificate = hasCert
+        ? options!.certificate
+        : // Otherwise: does the user want unsafe requests?
+        unsafe
+        ? undefined
+        : // Didn't specify, use our own certificate
+          RIOT_GAMES_CERT
 
       return {
         port: Number(port),
         pid: Number(pid),
         password,
-        certificate:
-          options?.certificate ||
-          (unsafe ? undefined : await fs.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf8'))
+        certificate
       }
     } catch {
       throw new ClientNotFoundError()
