@@ -74,6 +74,7 @@ LeagueClientUx process. If you wish to await until a client is found, you can us
 
 | Option | Default Value | Description |
 |--------|---------------|-------------|
+| name | `LeagueClientUx` | League Client name, set to RiotClientUx if you would like to authenticate with the Riot Client
 | awaitConnection | `false` | Await until a LeagueClientUx process is found |
 | pollInterval | `2500` | Duration in milliseconds between each poll. No-op if awaitConnection is false. |
 | certificate | `undefined` | A plain-text self-signed certificate to authenticate to the LCU API with. This option should only be used if you're self-signing with a certificate which is not the one Riot Games provides on their developer page. League Connect will default to using Riot's own self-signed certificate for authentication. If you're of what this option does, you should probably not use it. |
