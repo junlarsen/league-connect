@@ -5,6 +5,7 @@ import util from 'util'
 
 const exec = util.promisify(cp.exec)
 
+const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
 
 export interface Credentials {
@@ -28,6 +29,13 @@ export interface Credentials {
 }
 
 export interface AuthenticationOptions {
+  /**
+   * League Client process name. Set to RiotClientUx if you would like to
+   * authenticate with the Riot Client
+   *
+   * Defaults: LeagueClientUx
+   */
+  name?: string
   /**
    * Does not return before the League Client has been detected. This means the
    * function stays unresolved until a League has been found.
@@ -91,14 +99,15 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
   const RIOT_GAMES_CERT = await fs.promises.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf-8')
 
   async function tryAuthenticate() {
+    const name = options?.name ?? DEFAULT_NAME
     const portRegex = /--app-port=([0-9]+)/
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
     const pidRegex = /--app-pid=([0-9]+)/
 
     const command =
       process.platform === 'win32'
-        ? "WMIC PROCESS WHERE name='LeagueClientUx.exe' GET CommandLine"
-        : "ps x -o args | grep 'LeagueClientUx'"
+        ? `WMIC PROCESS WHERE name='${name}.exe' GET CommandLine`
+        : `ps x -o args | grep '${name}'`
 
     try {
       const { stdout } = await exec(command)
