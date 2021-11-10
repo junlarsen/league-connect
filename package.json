@@ -8,7 +8,8 @@
     "prepublishOnly": "yarn compile",
     "cert": "nugget https://static.developer.riotgames.com/docs/lol/riotgames.pem",
     "compile": "yarn fmt && tsc && yarn cert",
-    "fmt": "prettier --config .prettierrc src/ jest.config.js --write"
+    "fmt": "prettier --config .prettierrc src/ jest.config.js --write",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
