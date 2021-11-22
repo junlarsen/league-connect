@@ -103,14 +103,20 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     const portRegex = /--app-port=([0-9]+)/
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
     const pidRegex = /--app-pid=([0-9]+)/
+    const isWindows = process.platform === 'win32';
 
     const command =
-      process.platform === 'win32'
-        ? `WMIC PROCESS WHERE name='${name}.exe' GET CommandLine`
+      isWindows
+        ? `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
         : `ps x -o args | grep '${name}'`
 
+    const execOptions =
+      isWindows
+        ? { shell: 'powershell' }
+        : { }
+
     try {
-      const { stdout } = await exec(command)
+      const { stdout } = await exec(command, execOptions)
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!
