@@ -116,6 +116,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         : { }
 
     try {
+      // See #59 and #60 for why we are replacing all whitespace in the raw output
       const { stdout: rawStdout } = await exec(command, execOptions)
       const stdout = rawStdout.replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
