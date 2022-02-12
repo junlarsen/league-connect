@@ -116,7 +116,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         : { }
 
     try {
-      const { stdout } = await exec(command, execOptions)
+      const { stdout: rawStdout } = await exec(command, execOptions)
+      const stdout = rawStdout.replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!
