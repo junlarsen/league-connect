@@ -10,59 +10,59 @@ const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
 
 export interface Credentials {
-    /**
-     * The system port the LCU API is running on
-     */
-    port: number
-    /**
-     * The password for the LCU API
-     */
-    password: string
-    /**
-     * The system process id for the LeagueClientUx process
-     */
-    pid: number
-    /**
-     * Riot Games' self-signed root certificate (contents of .pem). If
-     * it is `undefined` then unsafe authentication will be used.
-     */
-    certificate?: string
+  /**
+   * The system port the LCU API is running on
+   */
+  port: number
+  /**
+   * The password for the LCU API
+   */
+  password: string
+  /**
+   * The system process id for the LeagueClientUx process
+   */
+  pid: number
+  /**
+   * Riot Games' self-signed root certificate (contents of .pem). If
+   * it is `undefined` then unsafe authentication will be used.
+   */
+  certificate?: string
 }
 
 export interface AuthenticationOptions {
-    /**
-     * League Client process name. Set to RiotClientUx if you would like to
-     * authenticate with the Riot Client
-     *
-     * Defaults: LeagueClientUx
-     */
-    name?: string
-    /**
-     * Does not return before the League Client has been detected. This means the
-     * function stays unresolved until a League has been found.
-     *
-     * Defaults: false
-     */
-    awaitConnection?: boolean
-    /**
-     * The time duration in milliseconds between each attempt to locate a League
-     * Client process. Has no effect if awaitConnection is false
-     *
-     * Default: 2500
-     */
-    pollInterval?: number
-    /**
-     * Riot Games' self-signed root certificate (contents of .pem)
-     *
-     * Default: version of certificate bundled in package
-     */
-    certificate?: string
-    /**
-     * Do not authenticate requests with Riot Games' self-signed root certificate
-     *
-     * Default: true if `certificate` is `undefined`
-     */
-    unsafe?: boolean
+  /**
+   * League Client process name. Set to RiotClientUx if you would like to
+   * authenticate with the Riot Client
+   *
+   * Defaults: LeagueClientUx
+   */
+  name?: string
+  /**
+   * Does not return before the League Client has been detected. This means the
+   * function stays unresolved until a League has been found.
+   *
+   * Defaults: false
+   */
+  awaitConnection?: boolean
+  /**
+   * The time duration in milliseconds between each attempt to locate a League
+   * Client process. Has no effect if awaitConnection is false
+   *
+   * Default: 2500
+   */
+  pollInterval?: number
+  /**
+   * Riot Games' self-signed root certificate (contents of .pem)
+   *
+   * Default: version of certificate bundled in package
+   */
+  certificate?: string
+  /**
+   * Do not authenticate requests with Riot Games' self-signed root certificate
+   *
+   * Default: true if `certificate` is `undefined`
+   */
+  unsafe?: boolean
 }
 
 /**
@@ -70,18 +70,18 @@ export interface AuthenticationOptions {
  * League Client supports. The Client runs on windows, linux or darwin.
  */
 export class InvalidPlatformError extends Error {
-    constructor() {
-        super('process runs on platform client does not support')
-    }
+  constructor() {
+    super('process runs on platform client does not support')
+  }
 }
 
 /**
  * Indicates that the league client could not be found
  */
 export class ClientNotFoundError extends Error {
-    constructor() {
-        super('league client process could not be located')
-    }
+  constructor() {
+    super('league client process could not be located')
+  }
 }
 
 /**
@@ -112,11 +112,11 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         ? iswin7 ? `wmic process where caption='${name}.exe' get commandline`
           : `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
         : `ps x -o args | grep '${name}'`
-        const execOptions = isWindows ? iswin7 ? {shell: 'cmd'} : {shell: 'powershell'} : {}
+    const execOptions = isWindows ? iswin7 ? {shell: 'cmd'} : {shell: 'powershell'} : {}
 
     try {
       // See #59 and #60 for why we are replacing all whitespace in the raw output
-      const { stdout: rawStdout } = await exec(command, execOptions)
+      const {stdout: rawStdout} = await exec(command, execOptions)
       const stdout = rawStdout.replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
@@ -130,8 +130,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         ? options!.certificate
         : // Otherwise: does the user want unsafe requests?
         unsafe
-        ? undefined
-        : // Didn't specify, use our own certificate
+          ? undefined
+          : // Didn't specify, use our own certificate
           RIOT_GAMES_CERT
 
       return {
