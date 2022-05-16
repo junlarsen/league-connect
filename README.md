@@ -5,9 +5,9 @@
   <p align="center">
     Module for consume the League of Legends Client APIs
     <br />
-    <a href="https://github.com/supergrecko/league-connect/issues">Report Bug</a>
+    <a href="https://github.com/matsjla/league-connect/issues">Report Bug</a>
     |
-    <a href="https://github.com/supergrecko/league-connect/issues">Request Feature</a>
+    <a href="https://github.com/matsjla/league-connect/issues">Request Feature</a>
   </p>
 </p>
 
@@ -219,9 +219,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [3]: https://nodejs.org/en/download/
 [4]: https://signup.na.leagueoflegends.com/en/signup/redownload
 
-[credentials]: https://github.com/supergrecko/league-connect/blob/master/src/authentication.ts#L6
-[await]: https://github.com/supergrecko/league-connect/blob/master/src/authentication.ts#L17
-[websocket]: https://github.com/supergrecko/league-connect/blob/master/src/websocket.ts#L25
+[credentials]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts#L6
+[await]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts#L17
+[websocket]: https://github.com/matsjla/league-connect/blob/master/src/websocket.ts#L25
 [riftexplorer]: https://github.com/Pupix/rift-explorer
-[request]: https://github.com/supergrecko/league-connect/blob/master/src/request.ts#L5
-[leagueclient]: https://github.com/supergrecko/league-connect/blob/master/src/client.ts#L13
+[request]: https://github.com/matsjla/league-connect/blob/master/src/request.ts#L5
+[leagueclient]: https://github.com/matsjla/league-connect/blob/master/src/client.ts#L13

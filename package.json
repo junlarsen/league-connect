@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/supergrecko/league-connect.git"
+    "url": "git+https://github.com/matsjla/league-connect.git"
   },
   "author": "me@supergrecko.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/supergrecko/league-connect/issues"
+    "url": "https://github.com/matsjla/league-connect/issues"
   },
-  "homepage": "https://github.com/supergrecko/league-connect#readme",
+  "homepage": "https://github.com/matsjla/league-connect#readme",
   "dependencies": {
     "@types/node-fetch": "^2.5.7",
     "@types/ws": "^7.4.0",

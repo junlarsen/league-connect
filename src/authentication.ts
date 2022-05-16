@@ -125,7 +125,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       const unsafe = options?.unsafe === true
       const hasCert = options?.certificate !== undefined
 
-      // See flow chart for this here: https://github.com/supergrecko/league-connect/pull/44#issuecomment-790384881
+      // See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
       // If user specifies certificate, use it
       const certificate = hasCert
         ? options!.certificate
