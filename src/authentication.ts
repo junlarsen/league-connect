@@ -1,10 +1,13 @@
 import fs from 'fs'
-import cp from 'child_process'
+import cp, { ChildProcess, ExecOptions } from 'child_process';
 import path from 'path'
 import util from 'util'
-import os from 'os'
 
-const exec = util.promisify(cp.exec)
+interface PromiseExec {
+  (command: string, options: ExecOptions): Promise<ChildProcess>
+}
+
+const exec = util.promisify(cp.exec) as PromiseExec
 
 const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
@@ -63,6 +66,23 @@ export interface AuthenticationOptions {
    * Default: true if `certificate` is `undefined`
    */
   unsafe?: boolean
+  /**
+   * Use deprecated Windows WMIC command line over Get-CimInstance. Does nothing
+   * if the system is not running on Windows. This is used to keep backwards
+   * compatability with Windows 7 systems that don't have Get-CimInstance
+   *
+   * See https://github.com/matsjla/league-connect/pull/54
+   * See https://github.com/matsjla/league-connect/pull/68
+   *
+   * Default: false
+   */
+  useDeprecatedWmic?: boolean
+  /**
+   * Set the Windows shell to use.
+   *
+   * Default: 'powershell'
+   */
+  windowsShell?: 'cmd' | 'powershell'
 }
 
 /**
@@ -105,19 +125,23 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
     const pidRegex = /--app-pid=([0-9]+)/
     const isWindows = process.platform === 'win32';
-    const iswin7 = isWindows && os.release().indexOf('6.1') != -1;
 
-    const command =
-      isWindows
-        ? iswin7 ? `wmic process where caption='${name}.exe' get commandline`
-          : `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
-        : `ps x -o args | grep '${name}'`
-    const execOptions = isWindows ? iswin7 ? {shell: 'cmd'} : {shell: 'powershell'} : {}
+    let command: string;
+    if (!isWindows) {
+      command = `ps x -o args | grep '${name}'`
+    } else if (isWindows && options?.useDeprecatedWmic === true) {
+      command = `wmic process where caption='${name}.exe' get commandline`
+    } else {
+      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
+    }
+
+    const executionOptions = isWindows ? { shell: options?.windowsShell ?? 'powershell' as string } : { }
 
     try {
       // See #59 and #60 for why we are replacing all whitespace in the raw output
-      const {stdout: rawStdout} = await exec(command, execOptions)
-      const stdout = rawStdout.replace(/\s/g, '')
+      const {stdout: rawStdout} = await exec(command, executionOptions)
+      // TODO: investigate regression with calling .replace on rawStdout
+      const stdout = (rawStdout as any).replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!

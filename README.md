@@ -79,6 +79,8 @@ LeagueClientUx process. If you wish to await until a client is found, you can us
 | pollInterval | `2500` | Duration in milliseconds between each poll. No-op if awaitConnection is false. |
 | certificate | `undefined` | A plain-text self-signed certificate to authenticate to the LCU API with. This option should only be used if you're self-signing with a certificate which is not the one Riot Games provides on their developer page. League Connect will default to using Riot's own self-signed certificate for authentication. If you're of what this option does, you should probably not use it. |
 | unsafe | `false` | If you do not wish to authenticate safely using a self-signed certificate you can authorize while ignoring any certificate rejections. To authenticate this way, set unsafe to `true`. The custom certificate option will take precedence over this, meaning this option is meaningless if a custom certificate is provided. |
+| useDeprecatedWmic | `false` | Use deprecated Windows WMIC command line over Get-CimInstance. Does nothing if the system is not running on Windows. |
+| windowsShell | `powershell` | Set the Windows shell to use. Either powershell or cmd. |
 
 ```js
 import { authenticate } from 'league-connect'
