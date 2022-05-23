@@ -1,13 +1,9 @@
 import fs from 'fs'
-import cp, { ChildProcess, ExecOptions } from 'child_process';
+import cp from 'child_process'
 import path from 'path'
 import util from 'util'
 
-interface PromiseExec {
-  (command: string, options: ExecOptions): Promise<ChildProcess>
-}
-
-const exec = util.promisify(cp.exec) as PromiseExec
+const exec = util.promisify(cp.exec) as typeof cp.exec.__promisify__
 
 const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
@@ -124,9 +120,9 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     const portRegex = /--app-port=([0-9]+)/
     const passwordRegex = /--remoting-auth-token=([\w-_]+)/
     const pidRegex = /--app-pid=([0-9]+)/
-    const isWindows = process.platform === 'win32';
+    const isWindows = process.platform === 'win32'
 
-    let command: string;
+    let command: string
     if (!isWindows) {
       command = `ps x -o args | grep '${name}'`
     } else if (isWindows && options?.useDeprecatedWmic === true) {
@@ -135,11 +131,11 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
     }
 
-    const executionOptions = isWindows ? { shell: options?.windowsShell ?? 'powershell' as string } : { }
+    const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
 
     try {
       // See #59 and #60 for why we are replacing all whitespace in the raw output
-      const {stdout: rawStdout} = await exec(command, executionOptions)
+      const { stdout: rawStdout } = await exec(command, executionOptions)
       // TODO: investigate regression with calling .replace on rawStdout
       const stdout = (rawStdout as any).replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
@@ -154,8 +150,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         ? options!.certificate
         : // Otherwise: does the user want unsafe requests?
         unsafe
-          ? undefined
-          : // Didn't specify, use our own certificate
+        ? undefined
+        : // Didn't specify, use our own certificate
           RIOT_GAMES_CERT
 
       return {
