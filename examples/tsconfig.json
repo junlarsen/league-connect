@@ -10,11 +10,9 @@
     ],
     "types": [
       "node",
-      "jest"
     ],
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node"
-  },
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "examples"]
+  }
 }

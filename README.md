@@ -36,6 +36,8 @@ To start using League Connect, ensure the following packages are installed:
 - Yarn or NPM
 - League of Legends ([download][3])
 
+You should also check out the [examples](examples) directory for code examples.
+
 ### Installation
 
 League Connect ships as an NPM module, installable through Yarn or NPM. To add the 
