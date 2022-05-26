@@ -1,6 +1,7 @@
 import https from 'https'
 import WebSocket, { ClientOptions } from 'ws'
 import { authenticate, AuthenticationOptions } from './authentication'
+import { trim } from './http'
 
 export interface EventResponse<T = any> {
   /**
@@ -120,16 +121,4 @@ export async function createWebSocketConnection(options: ConnectionOptions): Pro
   } while (socket?.readyState !== LeagueWebSocket.OPEN && socket?.readyState !== LeagueWebSocket.CONNECTING)
 
   return socket
-}
-
-/**
- * Trim slashes in front of a string
- * @param s
- */
-function trim(s: string): string {
-  let r = s
-  while (r.startsWith('/')) {
-    r = r.substr(1)
-  }
-  return r
 }
