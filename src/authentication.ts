@@ -3,7 +3,7 @@ import cp from 'child_process'
 import path from 'path'
 import util from 'util'
 
-const exec = util.promisify(cp.exec) as typeof cp.exec.__promisify__
+const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
 
 const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
