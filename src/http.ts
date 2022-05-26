@@ -23,6 +23,15 @@ export interface HttpRequestOptions<T = JsonObjectLike> {
   body?: T
 }
 
+/** Shared HTTP/1.1 and HTTP/2.0 response interface */
+export interface AnyResponse<T> {
+  ok: boolean
+  redirected: boolean
+  status: number
+
+  json(): T
+}
+
 /**
  * Mini-wrapper around http.IncomingMessage implementing common fields found in
  * fetch for easier transition from v5
@@ -30,7 +39,7 @@ export interface HttpRequestOptions<T = JsonObjectLike> {
  * The previous implementation used fetch, so the fields ok, redirected, status
  * and statusText have been preserved.
  */
-export class Response<T = JsonObjectLike> {
+export class Http1Response<T = JsonObjectLike> implements AnyResponse<T> {
   public ok: boolean
   public redirected: boolean
   public status: number
@@ -54,10 +63,10 @@ export class Response<T = JsonObjectLike> {
   }
 }
 
-export async function request<T = JsonObjectLike, R = JsonObjectLike>(
+export async function createHttp1Request<T = JsonObjectLike, R = JsonObjectLike>(
   options: HttpRequestOptions,
   credentials: Credentials
-): Promise<Response<R>> {
+): Promise<Http1Response<R>> {
   const agentOptions: https.AgentOptions =
     credentials.certificate === undefined ? { rejectUnauthorized: false } : { ca: credentials.certificate }
 
@@ -82,23 +91,25 @@ export async function request<T = JsonObjectLike, R = JsonObjectLike>(
         response.on('end', () => {
           try {
             const json = JSON.parse(bodyText)
-            resolve(new Response(response, json))
+            resolve(new Http1Response(response, json))
           } catch (jsonError) {
             reject(jsonError)
           }
         })
       }
     )
+    if (options.body !== undefined) {
+      const data = JSON.stringify(options.body)
+      const body = new TextEncoder().encode(data)
+      request.write(body, 'utf8')
+    }
 
-    const data = JSON.stringify(options.body)
-    const body = new TextEncoder().encode(data)
     request.on('error', (err) => reject(err))
-    request.write(body)
     request.end()
   })
 }
 
-function trim(s: string): string {
+export function trim(s: string): string {
   let r = s
   while (r.startsWith('/')) {
     r = r.substring(1)

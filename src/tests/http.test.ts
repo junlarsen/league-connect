@@ -1,10 +1,10 @@
-import { request } from '../http'
+import { createHttp1Request } from '../http'
 import { authenticate } from '../authentication'
 
 describe('http', () => {
   test('sending basic http1.1 request', async () => {
     const credentials = await authenticate()
-    const response = await request(
+    const response = await createHttp1Request(
       {
         url: '/Help',
         method: 'GET'
@@ -21,7 +21,7 @@ describe('http', () => {
 
   test('sending data in get request is ignored by http', async () => {
     const credentials = await authenticate()
-    const response = await request(
+    const response = await createHttp1Request(
       {
         url: '/Help',
         method: 'GET',
