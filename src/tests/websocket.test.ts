@@ -2,16 +2,15 @@ import { connect, EventResponse, LeagueWebSocket } from '../websocket'
 import { authenticate } from '../authentication'
 
 describe('connecting to the client websocket', () => {
-  test('authenticating to the websocket', async (done) => {
+  test('authenticating to the websocket', async () => {
     const credentials = await authenticate()
     const socket = await connect(credentials)
 
     expect(socket).toBeInstanceOf(LeagueWebSocket)
     expect(socket.subscriptions).toEqual(new Map())
-    done()
   })
 
-  test('an endpoint may be subscribed to multiple times', async (done) => {
+  test('an endpoint may be subscribed to multiple times', async () => {
     const credentials = await authenticate()
     const socket = await connect(credentials)
 
@@ -30,6 +29,5 @@ describe('connecting to the client websocket', () => {
     })
 
     expect(count).toBe(2)
-    done()
   })
 })

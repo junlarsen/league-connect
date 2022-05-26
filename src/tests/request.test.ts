@@ -2,7 +2,7 @@ import { request } from '../request'
 import { authenticate } from '../authentication'
 
 describe('sending requests to the api', () => {
-  test('authenticating to the api', async (done) => {
+  test('authenticating to the api', async () => {
     const credentials = await authenticate()
     const res = await request(
       {
@@ -14,6 +14,5 @@ describe('sending requests to the api', () => {
 
     expect(res.ok).toEqual(true)
     expect(res.status).toEqual(200)
-    done()
   })
 })

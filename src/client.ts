@@ -91,7 +91,7 @@ function processExists(pid: number): boolean {
     // `man 1 kill`: if sig is 0, then no signal is sent, but error checking
     // is still performed.
     return process.kill(pid, 0)
-  } catch (err) {
-    return err.code === 'EPERM'
+  } catch (err: unknown) {
+    return (err as any)?.code === 'EPERM'
   }
 }

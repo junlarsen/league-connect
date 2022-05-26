@@ -22,19 +22,19 @@
   },
   "homepage": "https://github.com/matsjla/league-connect#readme",
   "dependencies": {
-    "@types/node-fetch": "^2.5.7",
-    "@types/ws": "^7.4.0",
-    "node-fetch": "^2.6.1",
-    "ws": "^7.4.0"
+    "@types/node-fetch": "^2.6.1",
+    "@types/ws": "^7.4.7",
+    "node-fetch": "^2.6.7",
+    "ws": "^7.5.8"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.15",
+    "@types/jest": "^27.5.1",
     "@types/node": "^14.14.7",
-    "jest": "^26.6.3",
+    "jest": "^28.1.0",
     "nugget": "^2.0.1",
     "prettier": "^2.2.1",
-    "ts-jest": "^26.4.4",
-    "typescript": "^4.1.1-rc"
+    "ts-jest": "^28.0.3",
+    "typescript": "^4.7.2"
   },
   "keywords": [
     "league of legends",

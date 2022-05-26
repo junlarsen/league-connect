@@ -2,20 +2,19 @@ import { authenticate } from '../authentication'
 import { LeagueClient } from '../client'
 
 describe('league client adapter', () => {
-  test('it does not fail on valid pid', async (done) => {
+  test('it does not fail on valid pid', async () => {
     const credentials = await authenticate()
     const client = new LeagueClient(credentials)
 
     client.start()
     setTimeout(() => {
       client.stop()
-      done()
     }, 5000)
   }, 10_000)
 
   // Manual test
   // TODO: automatic spawn/respawn of client
-  test.skip('it detects connection loss/regain', async (done) => {
+  test.skip('it detects connection loss/regain', async () => {
     const credentials = await authenticate()
     const client = new LeagueClient(credentials)
 
@@ -31,7 +30,6 @@ describe('league client adapter', () => {
 
     setTimeout(() => {
       client.stop()
-      done()
     }, 300_000)
   }, 300_000)
 })
