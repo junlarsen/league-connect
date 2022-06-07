@@ -76,6 +76,7 @@ export async function createHttp1Request<T = JsonObjectLike, R = JsonObjectLike>
         host: '127.0.0.1',
         port: credentials.port,
         path: '/' + trim(options.url),
+        method: options.method,
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
