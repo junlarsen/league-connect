@@ -14,6 +14,9 @@ on the `Http1Response` and `Http2Response` classes.
 `request()` has been renamed and migrated to `createHttp1Request`, but the options are the same. Insted of returning an
 augmented Fetch response, this function now returns a `Http1Response`.
 
+If you do not wish to/don't have time to rewrite code to use 
+createHttp1Request, you can access `DEPRECATED_request` until version 7.0.0
+
 ```ts
 // previously
 const credentials = await authenticate()
