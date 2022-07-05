@@ -1,6 +1,7 @@
 import https from 'https'
 import WebSocket, { ClientOptions } from 'ws'
-import { Credentials } from './authentication'
+import { authenticate, AuthenticationOptions } from './authentication'
+import { trim } from './http'
 
 export interface EventResponse<T = any> {
   /**
@@ -67,33 +68,57 @@ export class LeagueWebSocket extends WebSocket {
   }
 }
 
-export async function connect(credentials: Credentials): Promise<LeagueWebSocket> {
-  const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
+export interface ConnectionOptions {
+  /**
+   * Options that will be used to authenticate to the LCU WebSocket API
+   */
+  authenticationOptions: AuthenticationOptions
 
-  return new LeagueWebSocket(url, {
-    headers: {
-      Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
-    },
-    agent: new https.Agent(
-      typeof credentials?.certificate === 'undefined'
-        ? {
-            rejectUnauthorized: false
-          }
-        : {
-            ca: credentials?.certificate
-          }
-    )
-  })
+  /**
+   * Polling interval in case connection fails.
+   *
+   * Default: 1000
+   */
+  pollInterval: number
+
+  /** Internal, do not use, only used for testing. */
+  __internalMockFaultyConnection?: number
+  __internalMockCallback?: () => void
 }
 
-/**
- * Trim slashes in front of a string
- * @param s
- */
-function trim(s: string): string {
-  let r = s
-  while (r.startsWith('/')) {
-    r = r.substr(1)
-  }
-  return r
+export async function createWebSocketConnection(options: ConnectionOptions): Promise<LeagueWebSocket> {
+  const credentials = await authenticate(options.authenticationOptions)
+  const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
+
+  let __mockFaultyCounter = options.__internalMockFaultyConnection ?? 0
+
+  let socket: LeagueWebSocket | null = null
+  do {
+    try {
+      if (__mockFaultyCounter > 0) {
+        __mockFaultyCounter--
+        options?.__internalMockCallback?.()
+        throw new Error('__mockFaultyCounter socket connection')
+      }
+
+      socket = new LeagueWebSocket(url, {
+        headers: {
+          Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
+        },
+        agent: new https.Agent(
+          typeof credentials?.certificate === 'undefined'
+            ? {
+                rejectUnauthorized: false
+              }
+            : {
+                ca: credentials?.certificate
+              }
+        )
+      })
+    } catch (err) {
+      await setTimeout(() => void 0, options.pollInterval ?? 1000)
+    }
+  } while (socket?.readyState !== LeagueWebSocket.OPEN && socket?.readyState !== LeagueWebSocket.CONNECTING)
+
+  return socket
 }

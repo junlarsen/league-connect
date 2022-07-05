@@ -26,6 +26,8 @@ League Connect is a NodeJs module for consuming the League of Legends Client API
 - [Official League Client API Documentation][1]
 - [Unofficial League Client API Documentation (HextechDocs)][2]
 
+**If you're migrating from v5, please check out the [migration guide](./MIGRATION-V5.md)**
+
 ### Prerequisites
 
 To start using League Connect, ensure the following packages are installed:
@@ -33,6 +35,8 @@ To start using League Connect, ensure the following packages are installed:
 - Node (any recent version should run ([download][3]))
 - Yarn or NPM
 - League of Legends ([download][3])
+
+You should also check out the [examples](examples) directory for code examples.
 
 ### Installation
 
@@ -50,8 +54,7 @@ $ npm install league-connect
 League Connect ships 4 primary APIs:
 
 - [`authenticate`: Fetch credentials to the Client APIs](#authenticate)
-- [`connect`: Attach to the Client WebSocket](#connect)
-- [`request`: Send HTTP requests to Client API endpoints](#request)
+- [`createHttp1/2Request`: Send HTTP requests to Client API endpoints](#requests)
 - [`LeagueClient`: Listen for League Client shutdown/startups](#leagueclient)
 
 ### Authenticate
@@ -93,7 +96,7 @@ const credentials = await authenticate({
 })
 ```
 
-###### [See source for available options][await]
+###### [See source for available options][credentials]
 
 ### Connect
 
@@ -101,10 +104,11 @@ The League Client runs a WebSocket for an event bus which anything using the cli
 may also connect to this socket over wss. LeagueConnect provides a function to retrieve a WebSocket connection.
 
 ```js
-import { connect, authenticate } from 'league-connect'
+import { createWebSocketConnection } from 'league-connect'
 
-const credentials = await authenticate()
-const ws = await connect(credentials)
+const ws = await createWebSocketConnection({
+  authenticationOptions: {} // any options that can also be called to authenticate()
+})
 ```
 
 League Connect uses its own extended WebSocket class which allows subscriptions to certain API endpoints.
@@ -114,10 +118,11 @@ The socket instance automatically subscribes to Json events from the API which w
 **Code Example**
 
 ```js
-import { connect, authenticate } from 'league-connect'
+import { createWebSocketConnection } from 'league-connect'
 
-const credentials = await authenticate()
-const ws = await connect(credentials)
+const ws = await createWebSocketConnection({
+  authenticationOptions: {}
+})
 
 ws.on('message', message => {
   // Subscribe to any websocket event
@@ -125,10 +130,9 @@ ws.on('message', message => {
 ```
 
 ```js
-import { connect, authenticate } from 'league-connect'
+import { createWebSocketConnection } from 'league-connect'
 
-const credentials = await authenticate()
-const ws = await connect(credentials)
+const ws = await createWebSocketConnection(credentials)
 
 ws.subscribe('/lol-chat/v1/conversations/active', (data, event) => {
   // data: deseralized json object from the event payload
@@ -138,25 +142,42 @@ ws.subscribe('/lol-chat/v1/conversations/active', (data, event) => {
 
 ###### [See source for LeagueWebSocket][websocket]
 
-### Request
+### Requests
+
+LeagueConnect supports both HTTP/1.1 and HTTP/2.0. Use the corresponding APIs as necessary.
 
 LeagueConnect supports sending HTTP requests to any of the League Client API endpoints
 (endpoints can be discovered and viewed with [rift-explorer][riftexplorer])
 
-Once you've found the endpoint you want to use, use the `request` function to send the
-http request.
+If you're looking to use HTTP/2.0, you first need to create a session.
 
 ```js
-import { request, authenticate } from 'league-connect'
+import { authenticate, createHttpSession, createHttp2Request } from 'league-connect'
 
 const credentials = await authenticate()
-const response = await request({
+const session = await createHttpSession(credentials)
+const response = await createHttp2Request({
+  method: 'GET',
+  url: '/lol-summoner/v1/current-summoner'
+}, session, credentials)
+
+// Remember to close the session when done
+session.close()
+```
+
+For HTTP/1.0, you can simply use the `createHttp1Request` function.
+
+```js
+import { authenticate, createHttp1Request } from 'league-connect'
+
+const credentials = await authenticate()
+const response = await createHttp1Request({
   method: 'GET',
   url: '/lol-summoner/v1/current-summoner'
 }, credentials)
 ```
 
-The options you pass into `request` decide where your http request goes. Available options:
+Both `createHttp1Request` and `createHttp2Request` take the same options.
 
 | Option | Description |
 |--------|-------------|
@@ -221,9 +242,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [3]: https://nodejs.org/en/download/
 [4]: https://signup.na.leagueoflegends.com/en/signup/redownload
 
-[credentials]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts#L6
-[await]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts#L17
-[websocket]: https://github.com/matsjla/league-connect/blob/master/src/websocket.ts#L25
+[credentials]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts
+[websocket]: https://github.com/matsjla/league-connect/blob/master/src/websocket.ts
 [riftexplorer]: https://github.com/Pupix/rift-explorer
-[request]: https://github.com/matsjla/league-connect/blob/master/src/request.ts#L5
-[leagueclient]: https://github.com/matsjla/league-connect/blob/master/src/client.ts#L13
+[request]: https://github.com/matsjla/league-connect/blob/master/src/http.ts
+[leagueclient]: https://github.com/matsjla/league-connect/blob/master/src/client.ts

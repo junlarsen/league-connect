@@ -32,15 +32,14 @@ XWehWA==
 `
 
 describe('authenticating to the api', () => {
-  test('locating the league client', async (done) => {
+  test('locating the league client', async () => {
     const credentials = await authenticate()
 
     expect(credentials).toBeDefined()
     expect(credentials?.certificate).toBeDefined()
-    done()
   })
 
-  test('enabling polling until a client is found', async (done) => {
+  test('enabling polling until a client is found', async () => {
     const credentials = await authenticate({
       awaitConnection: true,
       pollInterval: 2500
@@ -48,25 +47,22 @@ describe('authenticating to the api', () => {
 
     expect(credentials).toBeDefined()
     expect(credentials?.certificate).toBeDefined()
-    done()
   }, 300_000)
 
-  test('authentication using plaintext cert', async (done) => {
+  test('authentication using plaintext cert', async () => {
     const credentials = await authenticate({
       certificate: PLAINTEXT_CERT
     })
 
     expect(credentials).toBeDefined()
     expect(credentials?.certificate).toBeDefined()
-    done()
   })
 
-  test('authentication using unsafe cert toggles switch', async (done) => {
+  test('authentication using unsafe cert toggles switch', async () => {
     const credentials = await authenticate({
       unsafe: true
     })
 
     expect(credentials?.certificate).toBeUndefined()
-    done()
   })
 })

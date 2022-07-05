@@ -1,8 +1,9 @@
 import fetch, { Response as FetchResponse } from 'node-fetch'
 import https from 'https'
 import { Credentials } from './authentication'
+import { trim } from './http'
 
-export interface RequestOptions<T = any> {
+export interface DEPRECATED_RequestOptions<T = any> {
   /**
    * Relative URL (relative to LCU API base url) to send api request to
    */
@@ -23,7 +24,7 @@ export interface RequestOptions<T = any> {
  * Wrapper around Node-fetch Response which will deserialize JSON into the
  * proper type
  */
-export class Response<T> extends FetchResponse {
+export class DEPRECATED_Response<T> extends FetchResponse {
   constructor(parent: FetchResponse) {
     super(parent.body, parent)
   }
@@ -38,10 +39,10 @@ export class Response<T> extends FetchResponse {
   }
 }
 
-export async function request<T = any, R = any>(
-  options: RequestOptions<T>,
+export async function DEPRECATED_request<T = any, R = any>(
+  options: DEPRECATED_RequestOptions<T>,
   credentials?: Credentials
-): Promise<Response<R>> {
+): Promise<DEPRECATED_Response<R>> {
   const uri = trim(options.url)
   const url = `https://127.0.0.1:${credentials?.port}/${uri}`
   const hasBody = options.method !== 'GET' && options.body !== undefined
@@ -57,25 +58,13 @@ export async function request<T = any, R = any>(
     agent: new https.Agent(
       typeof credentials?.certificate === 'undefined'
         ? {
-            rejectUnauthorized: false
-          }
+          rejectUnauthorized: false
+        }
         : {
-            ca: credentials?.certificate
-          }
+          ca: credentials?.certificate
+        }
     )
   })
 
-  return new Response<R>(response)
-}
-
-/**
- * Trim slashes in front of a string
- * @param s
- */
-function trim(s: string): string {
-  let r = s
-  while (r.startsWith('/')) {
-    r = r.substr(1)
-  }
-  return r
+  return new DEPRECATED_Response<R>(response)
 }
