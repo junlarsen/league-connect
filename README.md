@@ -34,7 +34,7 @@ To start using League Connect, ensure the following packages are installed:
 
 - Node (any recent version should run ([download][3]))
 - Yarn or NPM
-- League of Legends ([download][3])
+- League of Legends ([download][4])
 
 You should also check out the [examples](examples) directory for code examples.
 
