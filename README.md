@@ -44,7 +44,7 @@ League Connect ships as an NPM module, installable through Yarn or NPM. To add t
 package to your project, install it through your package manager of choice.
 
 ```sh
-$ yarn install league-connect
+$ yarn add league-connect
 # Or ...
 $ npm install league-connect
 ```
