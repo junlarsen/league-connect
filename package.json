@@ -28,9 +28,9 @@
   },
   "homepage": "https://github.com/matsjla/league-connect#readme",
   "dependencies": {
-    "@types/ws": "^7.4.7",
+    "@types/ws": "^8.5.3",
     "node-fetch": "^3.2.8",
-    "ws": "^7.5.8"
+    "ws": "^8.8.1"
   },
   "devDependencies": {
     "@types/jest": "^27.5.1",
