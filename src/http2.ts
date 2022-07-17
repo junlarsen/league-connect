@@ -1,11 +1,11 @@
 import http2, { type IncomingHttpHeaders, type IncomingHttpStatusHeader } from 'http2'
-import { trim } from './trim'
-import type { Credentials } from './authentication'
 import fs from 'fs'
 import path from 'path'
 import { TextEncoder } from 'util'
 import assert from 'assert'
-import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types'
+import { trim } from './trim.js'
+import type { Credentials } from './authentication.js'
+import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types.js'
 
 /**
  * Create a HTTP/2.0 client session.

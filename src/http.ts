@@ -1,10 +1,10 @@
 import https from 'https'
 import type { IncomingMessage } from 'http'
-import type { Credentials } from './authentication'
 import { TextEncoder } from 'util'
 import assert from 'assert'
-import type { HttpResponse, HeaderPair, HttpRequestOptions, JsonObjectLike } from './request_types'
-import { trim } from './trim'
+import type { Credentials } from './authentication.js'
+import type { HttpResponse, HeaderPair, HttpRequestOptions, JsonObjectLike } from './request_types.js'
+import { trim } from './trim.js'
 
 export class Http1Response implements HttpResponse {
   public readonly ok: boolean

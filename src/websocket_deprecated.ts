@@ -1,6 +1,6 @@
-import { LeagueWebSocket } from './websocket'
-import { Credentials } from './authentication'
 import https from 'https'
+import { LeagueWebSocket } from './websocket.js'
+import { Credentials } from './authentication.js'
 
 export async function DEPRECATED_connect(credentials: Credentials): Promise<LeagueWebSocket> {
   const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
