@@ -1,7 +1,7 @@
 import https from 'https'
 import WebSocket, { ClientOptions } from 'ws'
 import { authenticate, AuthenticationOptions } from './authentication'
-import { trim } from './http'
+import { trim } from './trim'
 
 export interface EventResponse<T = any> {
   /**

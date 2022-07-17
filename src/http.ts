@@ -1,72 +1,60 @@
 import https from 'https'
-import { IncomingMessage } from 'http'
-import { Credentials } from './authentication'
+import type { IncomingMessage } from 'http'
+import type { Credentials } from './authentication'
 import { TextEncoder } from 'util'
 import assert from 'assert'
+import type { HttpResponse, HeaderPair, HttpRequestOptions, JsonObjectLike } from './request_types'
+import { trim } from './trim'
 
-export type JsonObjectLike = Record<string, unknown>
+export class Http1Response implements HttpResponse {
+  public readonly ok: boolean
+  public readonly redirected: boolean
+  public readonly status: number
 
-export interface HttpRequestOptions<T = JsonObjectLike> {
-  /**
-   * Relative URL (relative to LCU API base url) to send api request to
-   */
-  url: string
-  /**
-   * Http verb to use for request
-   */
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  /**
-   * Optionally a body to pass to PUT/PATCH/POST/DELETE. This is typically
-   * an object type as the library will parse this into JSON and send along
-   * with the request
-   */
-  body?: T
-}
-
-/** Shared HTTP/1.1 and HTTP/2.0 response interface */
-export interface AnyResponse<T> {
-  ok: boolean
-  redirected: boolean
-  status: number
-
-  json(): T
-}
-
-/**
- * Mini-wrapper around http.IncomingMessage implementing common fields found in
- * fetch for easier transition from v5
- *
- * The previous implementation used fetch, so the fields ok, redirected, status
- * and statusText have been preserved.
- */
-export class Http1Response<T = JsonObjectLike> implements AnyResponse<T> {
-  public ok: boolean
-  public redirected: boolean
-  public status: number
-  public statusText: string
-
-  public constructor(public message: IncomingMessage, private raw: T) {
-    assert(message.complete, 'Response constructor called with incomplete HttpIncomingMessage')
+  public constructor(private _message: IncomingMessage, private _raw: string) {
+    assert(_message.complete, 'Response constructor called with incomplete HttpIncomingMessage')
     // Safe assertion, this response originated from a http.ClientRequest
-    const code = message!.statusCode!
+    const code = _message!.statusCode!
 
     // See https://fetch.spec.whatwg.org/#statuses
     this.ok = code >= 200 && code < 300
-    this.redirected = code === 301 || code === 302 || code === 303 || code === 307 || code === 308
+    this.redirected = [301, 302, 303, 307, 308].includes(code)
     this.status = code
-    this.statusText = message.statusMessage!
   }
 
-  /** Convenience method kept for easy migration from v5 */
-  json(): T {
-    return this.raw
+  public json<T = JsonObjectLike>() {
+    return JSON.parse(this._raw) as T
+  }
+
+  public text(): string {
+    return this._raw
+  }
+
+  public headers(): HeaderPair[] {
+    const headers: HeaderPair[] = []
+
+    for (const [key, value] of Object.entries(this._message.headers)) {
+      if (key.startsWith(':')) {
+        continue
+      }
+
+      if (value === undefined) {
+        headers.push([key, ''])
+      } else if (Array.isArray(value)) {
+        headers.push([key, value.join(', ')])
+      } else {
+        headers.push([key, value])
+      }
+    }
+
+    return headers
   }
 }
 
-export async function createHttp1Request<T = JsonObjectLike, R = JsonObjectLike>(
-  options: HttpRequestOptions,
+export async function createHttp1Request<T>(
+  options: HttpRequestOptions<T>,
   credentials: Credentials
-): Promise<Http1Response<R>> {
+): Promise<Http1Response> {
   const agentOptions: https.AgentOptions =
     credentials.certificate === undefined ? { rejectUnauthorized: false } : { ca: credentials.certificate }
 
@@ -91,8 +79,7 @@ export async function createHttp1Request<T = JsonObjectLike, R = JsonObjectLike>
 
         response.on('end', () => {
           try {
-            const json = JSON.parse(bodyText)
-            resolve(new Http1Response(response, json))
+            resolve(new Http1Response(response, bodyText))
           } catch (jsonError) {
             reject(jsonError)
           }
@@ -108,12 +95,4 @@ export async function createHttp1Request<T = JsonObjectLike, R = JsonObjectLike>
     request.on('error', (err) => reject(err))
     request.end()
   })
-}
-
-export function trim(s: string): string {
-  let r = s
-  while (r.startsWith('/')) {
-    r = r.substring(1)
-  }
-  return r
 }

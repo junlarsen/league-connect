@@ -1,7 +1,7 @@
 import fetch, { Response as FetchResponse } from 'node-fetch'
 import https from 'https'
 import { Credentials } from './authentication'
-import { trim } from './http'
+import { trim } from './trim'
 
 export interface DEPRECATED_RequestOptions<T = any> {
   /**

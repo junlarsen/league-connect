@@ -1,5 +1,5 @@
-import { LeagueWebSocket  } from "./websocket"
-import { Credentials  } from "./authentication"
+import { LeagueWebSocket } from './websocket'
+import { Credentials } from './authentication'
 import https from 'https'
 
 export async function DEPRECATED_connect(credentials: Credentials): Promise<LeagueWebSocket> {

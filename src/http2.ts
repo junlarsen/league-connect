@@ -1,10 +1,11 @@
-import http2, { IncomingHttpHeaders, IncomingHttpStatusHeader } from 'http2'
-import { HttpRequestOptions, trim, JsonObjectLike, AnyResponse } from './http'
-import { Credentials } from './authentication'
+import http2, { type IncomingHttpHeaders, type IncomingHttpStatusHeader } from 'http2'
+import { trim } from './trim'
+import type { Credentials } from './authentication'
 import fs from 'fs'
 import path from 'path'
 import { TextEncoder } from 'util'
 import assert from 'assert'
+import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types'
 
 /**
  * Create a HTTP/2.0 client session.
@@ -20,26 +21,51 @@ export async function createHttpSession(credentials: Credentials): Promise<http2
   })
 }
 
-export class Http2Response<T = JsonObjectLike> implements AnyResponse<T> {
-  public ok: boolean
-  public redirected: boolean
-  public status: number
+export class Http2Response implements HttpResponse {
+  public readonly ok: boolean
+  public readonly redirected: boolean
+  public readonly status: number
 
   public constructor(
-    public headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
-    stream: http2.ClientHttp2Stream,
-    private raw: T
+    private _headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
+    private _stream: http2.ClientHttp2Stream,
+    private _raw: string
   ) {
-    assert(stream.closed, 'Response constructor called with unclosed ClientHttp2Stream')
-    const code = headers[':status']!
+    assert(_stream.closed, 'Response constructor called with unclosed ClientHttp2Stream')
+    const code = _headers[':status']!
 
+    // See https://fetch.spec.whatwg.org/#statuses
     this.ok = code >= 200 && code < 300
-    this.redirected = code === 301 || code === 302 || code === 303 || code === 307 || code === 308
+    this.redirected = [301, 302, 303, 307, 308].includes(code)
     this.status = code
   }
 
-  json(): T {
-    return this.raw
+  public json<T = JsonObjectLike>() {
+    return JSON.parse(this._raw) as T
+  }
+
+  public text(): string {
+    return this._raw
+  }
+
+  public headers(): HeaderPair[] {
+    const headers: HeaderPair[] = []
+
+    for (const [key, value] of Object.entries(this._headers)) {
+      if (key.startsWith(':')) {
+        continue
+      }
+
+      if (value === undefined) {
+        headers.push([key, ''])
+      } else if (Array.isArray(value)) {
+        headers.push([key, value.join(', ')])
+      } else {
+        headers.push([key, value])
+      }
+    }
+
+    return headers
   }
 }
 
@@ -73,9 +99,8 @@ export async function createHttp2Request<T>(
     request.on('error', (err) => reject(err))
     request.on('end', () => {
       try {
-        const json = JSON.parse(bodyText)
         request.close()
-        resolve(new Http2Response(headers, request, json))
+        resolve(new Http2Response(headers, request, bodyText))
       } catch (jsonError) {
         reject(jsonError)
       }
