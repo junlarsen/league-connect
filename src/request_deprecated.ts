@@ -58,11 +58,11 @@ export async function DEPRECATED_request<T = any, R = any>(
     agent: new https.Agent(
       typeof credentials?.certificate === 'undefined'
         ? {
-          rejectUnauthorized: false
-        }
+            rejectUnauthorized: false
+          }
         : {
-          ca: credentials?.certificate
-        }
+            ca: credentials?.certificate
+          }
     )
   })
 
