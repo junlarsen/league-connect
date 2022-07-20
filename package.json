@@ -1,19 +1,20 @@
 {
   "name": "league-connect",
-  "version": "6.0.0-rc3",
+  "version": "6.0.0-rc5",
   "description": "Module for consuming the League of Legends Client APIs",
   "type": "module",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "require": "./dist/index.cjs",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "prepublishOnly": "yarn compile",
+    "prepublishOnly": "yarn fmt && yarn cert && yarn compile",
     "cert": "nugget https://static.developer.riotgames.com/docs/lol/riotgames.pem",
-    "compile": "yarn fmt && tsc && yarn cert",
+    "compile": "tsup src/index.ts --format esm,cjs --clean --dts --sourcemap",
     "fmt": "prettier --config .prettierrc src/ jest.config.cjs --write",
     "test": "jest"
   },
@@ -39,6 +40,7 @@
     "nugget": "^2.0.1",
     "prettier": "^2.7.1",
     "ts-jest": "^28.0.3",
+    "tsup": "^6.1.3",
     "typescript": "^4.7.2"
   },
   "keywords": [
