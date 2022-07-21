@@ -2,11 +2,12 @@
   "name": "league-connect-examples",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "create-http2-requests": "ts-node create-http2-requests.ts"
+    "create-http2-requests": "ts-node-esm create-http2-requests.ts"
   },
   "dependencies": {
-    "league-connect": "*"
+    "league-connect": "file:../"
   },
   "devDependencies": {
     "ts-node": "^10.8.0",

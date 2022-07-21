@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { authenticate, ClientNotFoundError, Credentials } from './authentication'
+import { authenticate, ClientNotFoundError, Credentials } from './authentication.js'
 
 const DEFAULT_POLL_INTERVAL = 2500
 

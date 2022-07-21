@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
+    "target": "esnext",
+    "module": "esnext",
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
     "lib": [
-      "es2016"
+      "esnext"
     ],
     "types": [
       "node",

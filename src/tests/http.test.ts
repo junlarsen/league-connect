@@ -15,7 +15,6 @@ describe('http', () => {
     expect(response.ok).toBeTruthy()
     expect(response.redirected).toBeFalsy()
     expect(response.status).toBe(200)
-    expect(response.statusText).toBe('OK')
     expect(() => response.json()).not.toThrow()
   })
 

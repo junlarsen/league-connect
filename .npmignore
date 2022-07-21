@@ -1,6 +1,6 @@
 src
 node_modules
-jest.config.js
+jest.config.cjs
 tsconfig.json
 .gitignore
 .idea

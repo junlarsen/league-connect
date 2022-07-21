@@ -1,7 +1,7 @@
 import fetch, { Response as FetchResponse } from 'node-fetch'
 import https from 'https'
-import { Credentials } from './authentication'
-import { trim } from './http'
+import type { Credentials } from './authentication.js'
+import { trim } from './trim.js'
 
 export interface DEPRECATED_RequestOptions<T = any> {
   /**
@@ -58,11 +58,11 @@ export async function DEPRECATED_request<T = any, R = any>(
     agent: new https.Agent(
       typeof credentials?.certificate === 'undefined'
         ? {
-          rejectUnauthorized: false
-        }
+            rejectUnauthorized: false
+          }
         : {
-          ca: credentials?.certificate
-        }
+            ca: credentials?.certificate
+          }
     )
   })
 
