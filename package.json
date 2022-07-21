@@ -1,6 +1,6 @@
 {
   "name": "league-connect",
-  "version": "6.0.0-rc5",
+  "version": "6.0.0-rc6",
   "description": "Module for consuming the League of Legends Client APIs",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -29,8 +29,9 @@
   },
   "homepage": "https://github.com/matsjla/league-connect#readme",
   "dependencies": {
+    "@types/node-fetch": "^2.6.2",
     "@types/ws": "^8.5.3",
-    "node-fetch": "^3.2.8",
+    "node-fetch": "^2.6.7",
     "ws": "^8.8.1"
   },
   "devDependencies": {
