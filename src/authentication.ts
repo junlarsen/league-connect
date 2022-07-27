@@ -141,7 +141,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
       // TODO: investigate regression with calling .replace on rawStdout
       const stdout = (rawStdout as any).replace(/\s/g, '')
       const [, port] = stdout.match(portRegex)!
-      const [, password] = stdout.match(passwordRegex)!
+      const [, unreplacedPassword] = stdout.match(passwordRegex)!
+      const password = unreplacedPassword.replace("--app-pid", "")
       const [, pid] = stdout.match(pidRegex)!
       const unsafe = options?.unsafe === true
       const hasCert = options?.certificate !== undefined
