@@ -7,7 +7,7 @@
   "module": "./dist/index.js",
   "main": "./dist/index.cjs",
   "scripts": {
-    "prepublishOnly": "yarn fmt && yarn compile",
+    "prepublishOnly": "yarn build",
     "build": "tsup src/index.ts --format esm,cjs --clean --dts --sourcemap",
     "fmt": "prettier --config .prettierrc src/ examples/ jest.config.cjs --write",
     "test": "jest"

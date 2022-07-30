@@ -1,6 +1,6 @@
 import cp from 'child_process'
 import util from 'util'
-import { RIOT_GAMES_CERT  } from './cert.js'
+import { RIOT_GAMES_CERT } from './cert.js'
 
 const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
 
