@@ -1,0 +1,15 @@
+{
+  "name": "league-connect-examples",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "create-http2-requests": "ts-node create-http2-requests.ts"
+  },
+  "dependencies": {
+    "league-connect": "file:../../"
+  },
+  "devDependencies": {
+    "ts-node": "^10.8.0",
+    "typescript": "^4.7.2"
+  }
+}
