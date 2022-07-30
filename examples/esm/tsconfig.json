@@ -5,12 +5,8 @@
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
-    "lib": [
-      "esnext"
-    ],
-    "types": [
-      "node",
-    ],
+    "lib": ["esnext"],
+    "types": ["node"],
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node"

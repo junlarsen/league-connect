@@ -1,8 +1,6 @@
-import fs from 'fs'
 import cp from 'child_process'
-import path from 'path'
 import util from 'util'
-import { fileURLToPath, URL } from 'url'
+import { RIOT_GAMES_CERT } from './cert.js'
 
 const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
 
@@ -114,9 +112,6 @@ export class ClientNotFoundError extends Error {
  * windows/linux/darwin
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
-  const __dirname = fileURLToPath(new URL('.', import.meta.url))
-  const RIOT_GAMES_CERT = await fs.promises.readFile(path.join(__dirname, '..', 'riotgames.pem'), 'utf-8')
-
   async function tryAuthenticate() {
     const name = options?.name ?? DEFAULT_NAME
     const portRegex = /--app-port=([0-9]+)/

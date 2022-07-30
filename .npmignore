@@ -1,5 +1,6 @@
 src
 node_modules
+examples
 jest.config.cjs
 tsconfig.json
 .gitignore

@@ -1,12 +1,10 @@
 import http2, { type IncomingHttpHeaders, type IncomingHttpStatusHeader } from 'http2'
-import fs from 'fs'
-import path from 'path'
 import { TextEncoder } from 'util'
 import assert from 'assert'
-import { fileURLToPath, URL } from 'url'
 import { trim } from './trim.js'
 import type { Credentials } from './authentication.js'
 import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types.js'
+import { RIOT_GAMES_CERT } from './cert.js'
 
 /**
  * Create a HTTP/2.0 client session.
@@ -14,8 +12,6 @@ import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } fro
  * This invocation requires the credentials to have
  */
 export async function createHttpSession(credentials: Credentials): Promise<http2.ClientHttp2Session> {
-  const dir = fileURLToPath(new URL('.', import.meta.url))
-  const RIOT_GAMES_CERT = await fs.promises.readFile(path.join(dir, '..', 'riotgames.pem'), 'utf-8')
   const certificate = credentials.certificate ?? RIOT_GAMES_CERT
 
   return http2.connect(`https://127.0.0.1:${credentials.port}`, {
