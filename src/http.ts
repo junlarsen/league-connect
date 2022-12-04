@@ -11,7 +11,7 @@ export class Http1Response implements HttpResponse {
   public readonly redirected: boolean
   public readonly status: number
 
-  public constructor(private _message: IncomingMessage, private _raw: string) {
+  public constructor(private _message: IncomingMessage, private _raw: Buffer) {
     assert(_message.complete, 'Response constructor called with incomplete HttpIncomingMessage')
     // Safe assertion, this response originated from a http.ClientRequest
     const code = _message!.statusCode!
@@ -23,10 +23,14 @@ export class Http1Response implements HttpResponse {
   }
 
   public json<T = JsonObjectLike>() {
-    return JSON.parse(this._raw) as T
+    return JSON.parse(this._raw.toString()) as T
   }
 
   public text(): string {
+    return this._raw.toString()
+  }
+
+  public buffer(): Buffer {
     return this._raw
   }
 
@@ -66,20 +70,19 @@ export async function createHttp1Request<T>(
         path: '/' + trim(options.url),
         method: options.method,
         headers: {
-          Accept: 'application/json',
+          Accept: '*/*',
           'Content-Type': 'application/json',
           Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
         },
         agent: new https.Agent(agentOptions)
       },
       (response) => {
-        let bodyText = ''
-        response.setEncoding('utf8')
-        response.on('data', (data) => void (bodyText += data))
+        let buffer: any = []
+        response.on('data', (data) => void buffer.push(data))
 
         response.on('end', () => {
           try {
-            resolve(new Http1Response(response, bodyText))
+            resolve(new Http1Response(response, Buffer.concat(buffer)))
           } catch (jsonError) {
             reject(jsonError)
           }

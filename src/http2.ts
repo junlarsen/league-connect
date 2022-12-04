@@ -5,6 +5,7 @@ import { trim } from './trim.js'
 import type { Credentials } from './authentication.js'
 import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types.js'
 import { RIOT_GAMES_CERT } from './cert.js'
+import { Stream } from 'stream'
 
 /**
  * Create a HTTP/2.0 client session.
@@ -27,7 +28,7 @@ export class Http2Response implements HttpResponse {
   public constructor(
     private _headers: IncomingHttpHeaders & IncomingHttpStatusHeader,
     private _stream: http2.ClientHttp2Stream,
-    private _raw: string
+    private _raw: Buffer
   ) {
     assert(_stream.closed, 'Response constructor called with unclosed ClientHttp2Stream')
     const code = _headers[':status']!
@@ -39,10 +40,14 @@ export class Http2Response implements HttpResponse {
   }
 
   public json<T = JsonObjectLike>() {
-    return JSON.parse(this._raw) as T
+    return JSON.parse(this._raw.toString()) as T
   }
 
   public text(): string {
+    return this._raw.toString()
+  }
+
+  public buffer(): Buffer {
     return this._raw
   }
 
@@ -76,11 +81,10 @@ export async function createHttp2Request<T>(
   const request = session.request({
     ':path': '/' + trim(options.url),
     ':method': options.method,
-    Accept: 'application/json',
+    Accept: '*/*',
     'Content-Type': 'application/json',
     Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
   })
-  request.setEncoding('utf8')
   if (options.body) {
     const data = JSON.stringify(options.body)
     const body = new TextEncoder().encode(data)
@@ -88,17 +92,19 @@ export async function createHttp2Request<T>(
   }
 
   return new Promise((resolve, reject) => {
-    let bodyText = ''
+    let stream: any = []
     let headers: IncomingHttpHeaders & IncomingHttpStatusHeader
     request.on('response', (response) => {
       headers = response
     })
-    request.on('data', (data) => void (bodyText += data))
+    request.on('data', (data) => {
+      stream.push(data)
+    })
     request.on('error', (err) => reject(err))
     request.on('end', () => {
       try {
         request.close()
-        resolve(new Http2Response(headers, request, bodyText))
+        resolve(new Http2Response(headers, request, Buffer.concat(stream)))
       } catch (jsonError) {
         reject(jsonError)
       }
