@@ -5,7 +5,6 @@ import { trim } from './trim.js'
 import type { Credentials } from './authentication.js'
 import type { HeaderPair, HttpResponse, HttpRequestOptions, JsonObjectLike } from './request_types.js'
 import { RIOT_GAMES_CERT } from './cert.js'
-import { Stream } from 'stream'
 
 /**
  * Create a HTTP/2.0 client session.
