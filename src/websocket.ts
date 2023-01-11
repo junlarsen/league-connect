@@ -72,53 +72,84 @@ export interface ConnectionOptions {
   /**
    * Options that will be used to authenticate to the LCU WebSocket API
    */
-  authenticationOptions: AuthenticationOptions
+  authenticationOptions?: AuthenticationOptions
 
   /**
    * Polling interval in case connection fails.
    *
    * Default: 1000
    */
-  pollInterval: number
+  pollInterval?: number
 
-  /** Internal, do not use, only used for testing. */
-  __internalMockFaultyConnection?: number
-  __internalMockCallback?: () => void
+  /**
+   * Maximum number of retries to connect to the LCU WebSocket API.
+   * If set to -1, it will retry indefinitely.
+   * If set to 0, it will not retry.
+   * Default: 10
+   */
+  maxRetries?: number
+
+  /**
+   * Current retry count. Used internally, please do not modify.
+   */
+  __internalRetryCount?: number
 }
 
-export async function createWebSocketConnection(options: ConnectionOptions): Promise<LeagueWebSocket> {
-  const credentials = await authenticate(options.authenticationOptions)
+export async function createWebSocketConnection(options?: ConnectionOptions): Promise<LeagueWebSocket> {
+  const credentials = await authenticate(options?.authenticationOptions)
   const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
 
-  let __mockFaultyCounter = options.__internalMockFaultyConnection ?? 0
+  return await new Promise((resolve, reject) => {
+    const ws = new LeagueWebSocket(url, {
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
+      },
+      agent: new https.Agent(
+        typeof credentials?.certificate === 'undefined'
+          ? {
+              rejectUnauthorized: false
+            }
+          : {
+              ca: credentials?.certificate
+            }
+      )
+    })
 
-  let socket: LeagueWebSocket | null = null
-  do {
-    try {
-      if (__mockFaultyCounter > 0) {
-        __mockFaultyCounter--
-        options?.__internalMockCallback?.()
-        throw new Error('__mockFaultyCounter socket connection')
+    // Handle connection errors
+    const errorHandler = (ws.onerror = (err) => {
+      // Set options to default values if they are not set
+      options = options ?? {}
+      options.__internalRetryCount = options.__internalRetryCount ?? 0
+      options.pollInterval = options.pollInterval ?? 1000
+      options.maxRetries = options.maxRetries ?? 10
+
+      // Close the connection if it's still open to make sure there's no memory leak.
+      ws.close()
+
+      // Check if the error is a connection refused error. This is thrown when the LCU is starting but not completely ready yet.
+      if (err.message.includes('ECONNREFUSED')) {
+        options.__internalRetryCount++
+
+        // Check if the maximum number of retries has been reached and reject the promise if it has
+        if (options.maxRetries === 0) {
+          reject(new Error('Could not connect to LCU WebSocket API'))
+        } else if (options.maxRetries > 0 && options.__internalRetryCount > options.maxRetries) {
+          reject(new Error(`Could not connect to LCU WebSocket API after ${options.__internalRetryCount} retries`))
+        } else {
+          // Wait for the poll interval and try again
+          setTimeout(() => {
+            resolve(createWebSocketConnection(options))
+          }, options.pollInterval)
+        }
+      } else {
+        reject(err)
       }
+    })
 
-      socket = new LeagueWebSocket(url, {
-        headers: {
-          Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
-        },
-        agent: new https.Agent(
-          typeof credentials?.certificate === 'undefined'
-            ? {
-                rejectUnauthorized: false
-              }
-            : {
-                ca: credentials?.certificate
-              }
-        )
-      })
-    } catch (err) {
-      await setTimeout(() => void 0, options.pollInterval ?? 1000)
+    // Remove the error handler once the connection is established and resolve the promise
+    ws.onopen = () => {
+      ws.removeListener('error', errorHandler)
+      resolve(ws)
     }
-  } while (socket?.readyState !== LeagueWebSocket.OPEN && socket?.readyState !== LeagueWebSocket.CONNECTING)
-
-  return socket
+  })
 }
