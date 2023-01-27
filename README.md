@@ -40,7 +40,7 @@ You should also check out the [examples](examples) directory for code examples.
 
 ### Installation
 
-League Connect ships as an NPM module, installable through Yarn or NPM. To add the 
+League Connect ships as an NPM module, installable through Yarn or NPM. To add the
 package to your project, install it through your package manager of choice.
 
 ```sh
@@ -54,6 +54,7 @@ $ npm install league-connect
 League Connect ships 4 primary APIs:
 
 - [`authenticate`: Fetch credentials to the Client APIs](#authenticate)
+- [`LeagueWebSocket`: Subscribe to Client API endpoints](#leaguewebsocket)
 - [`createHttp1/2Request`: Send HTTP requests to Client API endpoints](#requests)
 - [`LeagueClient`: Listen for League Client shutdown/startups](#leagueclient)
 
@@ -98,7 +99,7 @@ const credentials = await authenticate({
 
 ###### [See source for available options][credentials]
 
-### Connect
+### LeagueWebSocket
 
 The League Client runs a WebSocket for an event bus which anything using the client may connect to. Developers
 may also connect to this socket over wss. LeagueConnect provides a function to retrieve a WebSocket connection.
@@ -106,9 +107,7 @@ may also connect to this socket over wss. LeagueConnect provides a function to r
 ```js
 import { createWebSocketConnection } from 'league-connect'
 
-const ws = await createWebSocketConnection({
-  authenticationOptions: {} // any options that can also be called to authenticate()
-})
+const ws = await createWebSocketConnection()
 ```
 
 League Connect uses its own extended WebSocket class which allows subscriptions to certain API endpoints.
@@ -121,7 +120,10 @@ The socket instance automatically subscribes to Json events from the API which w
 import { createWebSocketConnection } from 'league-connect'
 
 const ws = await createWebSocketConnection({
-  authenticationOptions: {}
+  authenticationOptions: {
+    // any options that can also be called to authenticate()
+    awaitConnection: true
+  }
 })
 
 ws.on('message', message => {
@@ -129,10 +131,23 @@ ws.on('message', message => {
 })
 ```
 
+The `createWebSocketConnection` function will retry connecting to the WebSocket 10 times by default. A rejected promise will be returned if the function is unable to connect. If you wish to change some of this behavior, you can pass in the following options to the function:
+| Option | Default Value | Description |
+|--------|---------------|-------------|
+| authenticationOptions | `undefined` | The same options that can be passed to the authenticate function |
+| pollInterval | `1000` | The amount of time in ms to wait between WS connection attempts |
+| maxRetries | `10` | The maximum amount of times to retry connecting to the WS. `-1` to keep retrying until connected |
+
 ```js
 import { createWebSocketConnection } from 'league-connect'
 
-const ws = await createWebSocketConnection(credentials)
+const ws = await createWebSocketConnection({
+  authenticationOptions: {
+    awaitConnection: true
+  },
+  pollInterval: 1000,
+  maxRetries: 10
+})
 
 ws.subscribe('/lol-chat/v1/conversations/active', (data, event) => {
   // data: deseralized json object from the event payload
@@ -140,14 +155,14 @@ ws.subscribe('/lol-chat/v1/conversations/active', (data, event) => {
 })
 ```
 
-###### [See source for LeagueWebSocket][websocket]
+###### [See source for available options][websocket]
 
 ### Requests
 
 LeagueConnect supports both HTTP/1.1 and HTTP/2.0. Use the corresponding APIs as necessary.
 
 LeagueConnect supports sending HTTP requests to any of the League Client API endpoints
-(endpoints can be discovered and viewed with [rift-explorer][riftexplorer])
+(endpoints can be discovered and viewed with [LCU Explorer][lcuexplorer])
 
 If you're looking to use HTTP/2.0, you first need to create a session.
 
@@ -157,8 +172,8 @@ import { authenticate, createHttpSession, createHttp2Request } from 'league-conn
 const credentials = await authenticate()
 const session = await createHttpSession(credentials)
 const response = await createHttp2Request({
-  method: 'GET',
-  url: '/lol-summoner/v1/current-summoner'
+    method: 'GET',
+    url: '/lol-summoner/v1/current-summoner'
 }, session, credentials)
 
 // Remember to close the session when done
@@ -172,8 +187,8 @@ import { authenticate, createHttp1Request } from 'league-connect'
 
 const credentials = await authenticate()
 const response = await createHttp1Request({
-  method: 'GET',
-  url: '/lol-summoner/v1/current-summoner'
+    method: 'GET',
+    url: '/lol-summoner/v1/current-summoner'
 }, credentials)
 ```
 
@@ -189,7 +204,7 @@ Both `createHttp1Request` and `createHttp2Request` take the same options.
 
 ### LeagueClient
 
-The LeagueClient class is an EventEmitter which will listen for the LeagueClientUx process, 
+The LeagueClient class is an EventEmitter which will listen for the LeagueClientUx process,
 reporting shutdown/startup of the application. The emitter has two listeners: `connect` and
 `disconnect`.
 
@@ -231,7 +246,7 @@ const client = new LeagueClient(credentials, {
 })
 ```
 
-######  [See source for available options][leagueclient]
+###### [See source for available options][leagueclient]
 
 ## License
 
@@ -244,6 +259,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 [credentials]: https://github.com/matsjla/league-connect/blob/master/src/authentication.ts
 [websocket]: https://github.com/matsjla/league-connect/blob/master/src/websocket.ts
-[riftexplorer]: https://github.com/Pupix/rift-explorer
+[lcuexplorer]: https://github.com/HextechDocs/lcu-explorer
 [request]: https://github.com/matsjla/league-connect/blob/master/src/http.ts
 [leagueclient]: https://github.com/matsjla/league-connect/blob/master/src/client.ts
