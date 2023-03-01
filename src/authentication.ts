@@ -115,7 +115,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
   async function tryAuthenticate() {
     const name = options?.name ?? DEFAULT_NAME
     const portRegex = /--app-port=([0-9]+)/
-    const passwordRegex = /--remoting-auth-token=([\w-_]+)/
+    const passwordRegex = /--remoting-auth-token=([\w-]+)/
     const pidRegex = /--app-pid=([0-9]+)/
     const isWindows = process.platform === 'win32'
 
