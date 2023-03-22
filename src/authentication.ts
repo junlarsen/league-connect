@@ -78,6 +78,11 @@ export interface AuthenticationOptions {
    * Default: 'powershell'
    */
   windowsShell?: 'cmd' | 'powershell'
+  /**
+   * Debug mode. Prints error information to console.
+   * @internal
+   */
+  __internalDebug?: boolean
 }
 
 /**
@@ -91,11 +96,20 @@ export class InvalidPlatformError extends Error {
 }
 
 /**
- * Indicates that the league client could not be found
+ * Indicates that the League Client could not be found
  */
 export class ClientNotFoundError extends Error {
   constructor() {
-    super('league client process could not be located')
+    super('League Client process could not be located')
+  }
+}
+
+/**
+ * Indicates that the League Client is running as administrator and the current script is not
+ */
+export class ClientElevatedPermsError extends Error {
+  constructor() {
+    super('League Client has been detected but is running as administrator')
   }
 }
 
@@ -106,17 +120,19 @@ export class ClientNotFoundError extends Error {
  * If options.awaitConnection is false the promise will resolve into a
  * rejection if a League Client is not running
  *
- * @param options {AuthenticationOptions} Authentication options, if any
+ * @param {AuthenticationOptions} [options] Authentication options, if any
  *
  * @throws InvalidPlatformError If the environment is not running
  * windows/linux/darwin
+ * @throws ClientNotFoundError If the League Client could not be found
+ * @throws ClientElevatedPermsError If the League Client is running as administrator and the script is not (Windows only)
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
     const name = options?.name ?? DEFAULT_NAME
-    const portRegex = /--app-port=([0-9]+)/
-    const passwordRegex = /--remoting-auth-token=([\w-]+?)(?:\s*-{2}[\w-]|\s*$)/
-    const pidRegex = /--app-pid=([0-9]+)/
+    const portRegex = /--app-port=([0-9]+)(?= *"| --)/
+    const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
+    const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
     const isWindows = process.platform === 'win32'
 
     let command: string
@@ -125,16 +141,16 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     } else if (isWindows && options?.useDeprecatedWmic === true) {
       command = `wmic process where caption='${name}.exe' get commandline`
     } else {
-      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object CommandLine | fl`
+      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
     }
 
     const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
 
     try {
-      // See #59 and #60 for why we are replacing all whitespace in the raw output
       const { stdout: rawStdout } = await exec(command, executionOptions)
       // TODO: investigate regression with calling .replace on rawStdout
-      const stdout = (rawStdout as any).replace(/\s/g, '')
+      // Remove newlines from stdout
+      const stdout = rawStdout.replace(/\n|\r/g, '')
       const [, port] = stdout.match(portRegex)!
       const [, password] = stdout.match(passwordRegex)!
       const [, pid] = stdout.match(pidRegex)!
@@ -157,7 +173,17 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         password,
         certificate
       }
-    } catch {
+    } catch (err) {
+      if (options?.__internalDebug) console.error(err)
+      // Check if the user is running the client as an administrator leading to not being able to find the process
+      // Requires PowerShell 3.0 or higher
+      if (executionOptions.shell === 'powershell') {
+        const { stdout: isAdmin } = await exec(
+          `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`,
+          executionOptions
+        )
+        if (isAdmin.includes('True')) throw new ClientElevatedPermsError()
+      }
       throw new ClientNotFoundError()
     }
   }
@@ -175,7 +201,8 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
         .then((result) => {
           resolve(result)
         })
-        .catch((_) => {
+        .catch((err) => {
+          if (err instanceof ClientElevatedPermsError) reject(err)
           setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
         })
     })
