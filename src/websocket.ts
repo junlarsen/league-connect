@@ -109,6 +109,13 @@ export interface ConnectionOptions {
   __internalMockCallback?: () => void
 }
 
+/**
+ * Creates a WebSocket connection to the League Client
+ * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
+ *
+ * @throws Error If the connection fails due to ECONNREFUSED
+ * @throws WebSocket.ErrorEvent If the connection fails for any other reason
+ */
 export async function createWebSocketConnection(options: ConnectionOptions = {}): Promise<LeagueWebSocket> {
   const credentials = await authenticate(options.authenticationOptions)
   const url = `wss://riot:${credentials.password}@127.0.0.1:${credentials.port}`
