@@ -122,6 +122,17 @@ export interface ConnectionOptions {
 }
 
 /**
+ * Error codes for the WebSocket connection
+ * @internal
+ */
+export enum ErrorCode {
+  NoConnectionTryAgain,
+  NoConnectionNoRetries,
+  NoConnectionMaxRetries,
+  OtherError
+}
+
+/**
  * Creates a WebSocket connection to the League Client
  * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
  *
@@ -149,40 +160,25 @@ export async function createWebSocketConnection(options: ConnectionOptions = {})
     })
 
     // Handle connection errors
-    const errorHandler = (ws.onerror = (err) => {
-      // Set options to default values if they are not set
-      options.__internalRetryCount = options.__internalRetryCount ?? 0
-      options.pollInterval = options.pollInterval ?? 1000
-      options.maxRetries = options.maxRetries ?? 10
-
-      // Check if this is a test and if so, call the mock callback
-      if (options.__internalMockFaultyConnection && options.__internalMockCallback) {
-        if (err.message.includes('EndTestOpen') && options.__internalRetryCount >= options.maxRetries) resolve(ws)
-        options.__internalMockCallback?.()
-      }
-
-      // Close the connection if it's still open to make sure there's no memory leak.
+    ws.onerror = async (err) => {
       ws.close()
-
-      // Check if the error is a connection refused error. This is thrown when the LCU is starting but not completely ready yet.
-      if (err.message.includes('ECONNREFUSED')) {
-        options.__internalRetryCount++
-
-        // Check if the maximum number of retries has been reached and reject the promise if it has
-        if (options.maxRetries === 0) {
-          reject(new Error('Could not connect to LCU WebSocket API'))
-        } else if (options.maxRetries > 0 && options.__internalRetryCount > options.maxRetries) {
-          reject(new Error(`Could not connect to LCU WebSocket API after ${options.__internalRetryCount - 1} retries`))
-        } else {
-          // Wait for the poll interval and try again
-          setTimeout(() => {
-            resolve(createWebSocketConnection(options))
-          }, options.pollInterval)
-        }
-      } else {
-        reject(err)
+      const response = await errorHandler(err, options)
+      switch (response) {
+        case ErrorCode.NoConnectionTryAgain:
+          resolve(await createWebSocketConnection(options))
+        case ErrorCode.NoConnectionNoRetries:
+          reject(new LeagueWebSocketInitError('Could not connect to LCU WebSocket API', err))
+        case ErrorCode.NoConnectionMaxRetries:
+          reject(
+            new LeagueWebSocketInitError(
+              `Could not connect to LCU WebSocket API after ${options.__internalRetryCount} retries`,
+              err
+            )
+          )
+        default:
+          reject(new LeagueWebSocketInitError(err.message, err))
       }
-    })
+    }
 
     // Check if this is a test and if so, emit an error.
     // Requires waiting for the connection to be established since it's actually connecting to the LCU before emitting the error.
@@ -199,4 +195,34 @@ export async function createWebSocketConnection(options: ConnectionOptions = {})
       }
     }
   })
+}
+
+/**
+ * Handle errors that occur when connecting to the LCU WebSocket API
+ *
+ * @param {Websocket.ErrorEvent} err The error that occurred
+ * @param {ConnectionOptions} options The options that were passed to the createWebSocketConnection function
+ * @internal
+ */
+export async function errorHandler(err: WebSocket.ErrorEvent, options: ConnectionOptions = {}): Promise<ErrorCode> {
+  // Set options to default values if they are not set
+  options.__internalRetryCount === undefined ? (options.__internalRetryCount = 0) : options.__internalRetryCount++
+  options.maxRetries = options.maxRetries ?? 10
+
+  if (options.__internalMockCallback) options.__internalMockCallback()
+
+  // Check if the error is a connection refused error. This is thrown when the LCU is starting but not completely ready yet.
+  if (err.message.includes('ECONNREFUSED')) {
+    // Check if the maximum number of retries has been reached and reject the promise if it has
+    if (options.maxRetries === 0) return ErrorCode.NoConnectionNoRetries
+    else if (options.maxRetries !== -1 && options.__internalRetryCount > options.maxRetries)
+      return ErrorCode.NoConnectionMaxRetries
+    else {
+      // Wait for the poll interval and try again
+      return new Promise((resolve) =>
+        setTimeout(() => resolve(ErrorCode.NoConnectionTryAgain), options.pollInterval ?? 1000)
+      )
+    }
+  }
+  return ErrorCode.OtherError
 }
