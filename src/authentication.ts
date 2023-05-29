@@ -158,19 +158,17 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
   if (options?.awaitConnection) {
     // Poll until a client is found, attempting to resolve every
     // `options.pollInterval` milliseconds
+    const pollInterval = options?.pollInterval ?? DEFAULT_POLL_INTERVAL
     return new Promise(function self(resolve, reject) {
       tryAuthenticate()
-        .then((result) => {
-          resolve(result)
-        })
+        .then(resolve)
         .catch((err) => {
           if (err instanceof ClientElevatedPermsError) reject(err)
-          setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
+          setTimeout(self, pollInterval, resolve, reject)
         })
     })
-  } else {
-    return tryAuthenticate()
   }
+  return tryAuthenticate()
 }
 
 /**
