@@ -68,6 +68,18 @@ export class LeagueWebSocket extends WebSocket {
   }
 }
 
+/**
+ * Error thrown when the WebSocket initialization fails
+ */
+export class LeagueWebSocketInitError extends Error {
+  public readonly errorEvent: WebSocket.ErrorEvent
+
+  constructor(message: string, originalError: WebSocket.ErrorEvent) {
+    super(message)
+    this.errorEvent = originalError
+  }
+}
+
 export interface ConnectionOptions {
   /**
    * Options that will be used to authenticate to the LCU WebSocket API
