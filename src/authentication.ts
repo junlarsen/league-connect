@@ -114,6 +114,24 @@ export class ClientElevatedPermsError extends Error {
 }
 
 /**
+ * Indicates that the League Client process arguments could not be parsed
+ */
+export class ProcessArgsParsingError extends Error {
+  public readonly rawStdout: string | undefined
+  public readonly port: string | undefined
+  public readonly password: string | undefined
+  public readonly pid: string | undefined
+
+  constructor(rawStdout?: string, port?: string, password?: string, pid?: string) {
+    super('Failed to parse process arguments')
+    this.rawStdout = rawStdout
+    this.port = port
+    this.password = password
+    this.pid = pid
+  }
+}
+
+/**
  * Locates a League Client and retrieves the credentials for the LCU API
  * from the found process
  *
