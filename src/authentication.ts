@@ -139,21 +139,20 @@ export class ProcessArgsParsingError extends Error {
  * rejection if a League Client is not running
  *
  * @param {AuthenticationOptions} [options] Authentication options, if any
- *
  * @throws InvalidPlatformError If the environment is not running
  * windows/linux/darwin
  * @throws ClientNotFoundError If the League Client could not be found
  * @throws ClientElevatedPermsError If the League Client is running as administrator and the script is not (Windows only)
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
-  async function tryAuthenticate() {
-    const rawStdout = await getProcessArgs(options)
-    return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
-  }
-
-  // Does not run windows/linux/darwin
+  // Check if the platform is supported (Winodows, Linux, Darwin/MacOS)
   if (!['win32', 'linux', 'darwin'].includes(process.platform)) {
     throw new InvalidPlatformError()
+  }
+
+  async function tryAuthenticate(): Promise<Credentials> {
+    const rawStdout = await getProcessArgs(options)
+    return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
   }
 
   if (options?.awaitConnection) {
@@ -236,16 +235,12 @@ export function parseProcessArgs(rawStdout: string, unsafe: boolean = false, cer
   if (port === undefined || password === undefined || pid === undefined || isNaN(Number(port)) || isNaN(Number(pid)))
     throw new ProcessArgsParsingError(rawStdout, port, password, pid)
 
-  // See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
-  // If user specifies certificate, use it
-  const hasCert = cert !== undefined
-  const certificate = hasCert
-    ? cert
-    : // Otherwise: does the user want unsafe requests?
-    unsafe
-    ? undefined
-    : // Didn't specify, use our own certificate
-      RIOT_GAMES_CERT
+  /**
+   * If a user-provided certificate is available, use it. Otherwise, if unsafe requests are allowed, set it to undefined.
+   * Finally, if neither of those conditions are met, default to the Riot Games certificate.
+   * See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
+   */
+  const certificate = cert ?? (unsafe ? undefined : RIOT_GAMES_CERT)
 
   return {
     port: Number(port),
