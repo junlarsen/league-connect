@@ -148,14 +148,9 @@ export async function createWebSocketConnection(options: ConnectionOptions = {})
       headers: {
         Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
       },
+      // Use the certificate if it is provided, otherwise disable certificate verification
       agent: new https.Agent(
-        typeof credentials?.certificate === 'undefined'
-          ? {
-              rejectUnauthorized: false
-            }
-          : {
-              ca: credentials?.certificate
-            }
+        credentials?.certificate ? { ca: credentials?.certificate } : { rejectUnauthorized: false }
       )
     })
 
