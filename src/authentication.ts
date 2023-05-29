@@ -1,8 +1,8 @@
-import cp from 'child_process'
-import util from 'util'
+import { exec as nodeExec } from 'child_process'
+import { promisify } from 'util'
 import { RIOT_GAMES_CERT } from './cert.js'
 
-const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
+const exec = promisify(nodeExec)
 
 const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
