@@ -223,9 +223,9 @@ export async function getProcessArgs(options?: AuthenticationOptions): Promise<s
  * @internal
  */
 export function parseProcessArgs(rawStdout: string, unsafe: boolean = false, cert?: string): Credentials {
-  const portRegex = /--app-port=([0-9]+)(?= *"| --)/
-  const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
-  const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
+  const portRegex = /--app-port=([0-9]+)(?= *"| --|$)/
+  const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --|$)/
+  const pidRegex = /--app-pid=([0-9]+)(?= *"| --|$)/
 
   // Remove newlines from stdout
   const stdout = rawStdout.replace(/\n|\r/g, '')
