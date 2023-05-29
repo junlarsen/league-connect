@@ -147,36 +147,8 @@ export class ProcessArgsParsingError extends Error {
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
-    const name = options?.name ?? DEFAULT_NAME
-    const isWindows = process.platform === 'win32'
-
-    let command: string
-    if (!isWindows) {
-      command = `ps x -o args | grep '${name}'`
-    } else if (isWindows && options?.useDeprecatedWmic === true) {
-      command = `wmic process where caption='${name}.exe' get commandline`
-    } else {
-      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
-    }
-
-    const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
-
-    try {
-      const { stdout: rawStdout } = await exec(command, executionOptions)
-      return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
-    } catch (err) {
-      if (options?.__internalDebug) console.error(err)
-      // Check if the user is running the client as an administrator leading to not being able to find the process
-      // Requires PowerShell 3.0 or higher
-      if (executionOptions.shell === 'powershell') {
-        const { stdout: isAdmin } = await exec(
-          `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`,
-          executionOptions
-        )
-        if (isAdmin.includes('True')) throw new ClientElevatedPermsError()
-      }
-      throw new ClientNotFoundError()
-    }
+    const rawStdout = await getProcessArgs(options)
+    return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
   }
 
   // Does not run windows/linux/darwin
@@ -199,6 +171,47 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     })
   } else {
     return tryAuthenticate()
+  }
+}
+
+/**
+ * Retrieves the command line arguments for the League Client or options.name if provided.
+ *
+ * @param {AuthenticationOptions} options Authentication options provided by the user, if any
+ * @throws {ClientNotFoundError} If the League Client process is not found.
+ * @throws {ClientElevatedPermsError} If the user is running the client as an administrator, preventing process detection.
+ * @internal
+ */
+export async function getProcessArgs(options?: AuthenticationOptions): Promise<string> {
+  const name = options?.name ?? DEFAULT_NAME
+  const isWindows = process.platform === 'win32'
+
+  let command: string
+  if (!isWindows) {
+    command = `ps x -o args | grep '${name}'`
+  } else if (isWindows && options?.useDeprecatedWmic === true) {
+    command = `wmic process where caption='${name}.exe' get commandline`
+  } else {
+    command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
+  }
+
+  const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
+
+  try {
+    const { stdout: rawStdout } = await exec(command, executionOptions)
+    return rawStdout
+  } catch (err) {
+    if (options?.__internalDebug) console.error(err)
+    // Check if the user is running the client as an administrator leading to not being able to find the process
+    // Requires PowerShell 3.0 or higher
+    if (executionOptions.shell === 'powershell') {
+      const { stdout: isAdmin } = await exec(
+        `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`,
+        executionOptions
+      )
+      if (isAdmin.includes('True')) throw new ClientElevatedPermsError()
+    }
+    throw new ClientNotFoundError()
   }
 }
 
