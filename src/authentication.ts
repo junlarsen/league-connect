@@ -148,9 +148,6 @@ export class ProcessArgsParsingError extends Error {
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
   async function tryAuthenticate() {
     const name = options?.name ?? DEFAULT_NAME
-    const portRegex = /--app-port=([0-9]+)(?= *"| --)/
-    const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
-    const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
     const isWindows = process.platform === 'win32'
 
     let command: string
@@ -166,31 +163,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
 
     try {
       const { stdout: rawStdout } = await exec(command, executionOptions)
-      // TODO: investigate regression with calling .replace on rawStdout
-      // Remove newlines from stdout
-      const stdout = rawStdout.replace(/\n|\r/g, '')
-      const [, port] = stdout.match(portRegex)!
-      const [, password] = stdout.match(passwordRegex)!
-      const [, pid] = stdout.match(pidRegex)!
-      const unsafe = options?.unsafe === true
-      const hasCert = options?.certificate !== undefined
-
-      // See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
-      // If user specifies certificate, use it
-      const certificate = hasCert
-        ? options!.certificate
-        : // Otherwise: does the user want unsafe requests?
-        unsafe
-        ? undefined
-        : // Didn't specify, use our own certificate
-          RIOT_GAMES_CERT
-
-      return {
-        port: Number(port),
-        pid: Number(pid),
-        password,
-        certificate
-      }
+      return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
     } catch (err) {
       if (options?.__internalDebug) console.error(err)
       // Check if the user is running the client as an administrator leading to not being able to find the process
@@ -226,5 +199,45 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
     })
   } else {
     return tryAuthenticate()
+  }
+}
+
+/**
+ * Process the command line arguments and return the credentials
+ *
+ * @param {string} rawStdout The raw stdout from the command line
+ * @param {boolean} [unsafe] Does the user want unsafe requests? Default: False
+ * @param {string} [cert] User specified certificate, if any
+ * @internal
+ */
+export function parseProcessArgs(rawStdout: string, unsafe: boolean = false, cert?: string): Credentials {
+  const portRegex = /--app-port=([0-9]+)(?= *"| --)/
+  const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
+  const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
+
+  // Remove newlines from stdout
+  const stdout = rawStdout.replace(/\n|\r/g, '')
+  const port = stdout.match(portRegex)?.[1]
+  const password = stdout.match(passwordRegex)?.[1]
+  const pid = stdout.match(pidRegex)?.[1]
+  if (port === undefined || password === undefined || pid === undefined || isNaN(Number(port)) || isNaN(Number(pid)))
+    throw new ProcessArgsParsingError(rawStdout, port, password, pid)
+
+  // See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
+  // If user specifies certificate, use it
+  const hasCert = cert !== undefined
+  const certificate = hasCert
+    ? cert
+    : // Otherwise: does the user want unsafe requests?
+    unsafe
+    ? undefined
+    : // Didn't specify, use our own certificate
+      RIOT_GAMES_CERT
+
+  return {
+    port: Number(port),
+    pid: Number(pid),
+    password,
+    certificate
   }
 }
