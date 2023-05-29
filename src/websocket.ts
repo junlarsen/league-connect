@@ -108,16 +108,9 @@ export interface ConnectionOptions {
   __internalRetryCount?: number
 
   /**
-   * Mock faulty connections. Used internally.
-   * Value is the error message.
-   * @internal
-   */
-  __internalMockFaultyConnection?: string
-
-  /**
    * Callback function to be called when a mock faulty connection is made.
    * @internal
-   * */
+   */
   __internalMockCallback?: () => void
 }
 
@@ -134,10 +127,9 @@ export enum ErrorCode {
 
 /**
  * Creates a WebSocket connection to the League Client
- * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
  *
- * @throws Error If the connection fails due to ECONNREFUSED
- * @throws WebSocket.ErrorEvent If the connection fails for any other reason
+ * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
+ * @throws {LeagueWebSocketInitError} Thrown when the WebSocket initialization fails
  */
 export async function createWebSocketConnection(options: ConnectionOptions = {}): Promise<LeagueWebSocket> {
   const credentials = await authenticate(options.authenticationOptions)
@@ -175,19 +167,10 @@ export async function createWebSocketConnection(options: ConnectionOptions = {})
       }
     }
 
-    // Check if this is a test and if so, emit an error.
-    // Requires waiting for the connection to be established since it's actually connecting to the LCU before emitting the error.
-    if (options.__internalMockFaultyConnection) {
-      ws.onopen = () => {
-        ws.emit('error', new Error(`${options.__internalMockFaultyConnection}`))
-        ws.removeListener('error', errorHandler)
-      }
-    } else {
-      // Remove the error handler once the connection is established and resolve the promise
-      ws.onopen = () => {
-        ws.removeListener('error', errorHandler)
-        resolve(ws)
-      }
+    // Remove the error handler once the connection is established and resolve the promise
+    ws.onopen = () => {
+      ws.removeListener('error', errorHandler)
+      resolve(ws)
     }
   })
 }
