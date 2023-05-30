@@ -174,7 +174,7 @@ export async function authenticate(options?: AuthenticationOptions): Promise<Cre
 /**
  * Retrieves the command line arguments for the League Client or options.name if provided.
  *
- * @param {AuthenticationOptions} options Authentication options provided by the user, if any
+ * @param {AuthenticationOptions} [options] Authentication options provided by the user, if any
  * @throws {ClientNotFoundError} If the League Client process is not found.
  * @throws {ClientElevatedPermsError} If the user is running the client as an administrator, preventing process detection.
  * @internal
