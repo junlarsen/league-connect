@@ -1,4 +1,4 @@
-import { authenticate } from '../authentication'
+import { Credentials, ProcessArgsParsingError, authenticate, getProcessArgs, parseProcessArgs } from '../authentication'
 
 // Plaintext contents of riotgames.pem, selfsigned cert.
 // Yes, this is intentionally supposed to be in the test code.
@@ -31,7 +31,74 @@ XWehWA==
 -----END CERTIFICATE-----
 `
 
+describe('validating regex patterns', () => {
+  let expected: Credentials
+  beforeEach(() => {
+    expected = {
+      port: 12345,
+      password: 'R69heN3CknTbqW6uUFXyoE',
+      pid: 1234,
+      // '\n' makes PLAINTEXT_CERT equal to the Riot Games selfsigned cert
+      certificate: '\n' + PLAINTEXT_CERT
+    }
+  })
+  test('seperated by spaces', () => {
+    const stdout = `--app-port=12345 --remoting-auth-token=R69heN3CknTbqW6uUFXyoE --app-pid=1234`
+    const credentials = parseProcessArgs(stdout)
+    expect(credentials).toBeDefined()
+    expect(credentials).toMatchObject(expected)
+  })
+  test('surrounded by quotes', () => {
+    const stdout = `"--app-port=12345" "--remoting-auth-token=R69heN3CknTbqW6uUFXyoE" "--app-pid=1234"`
+    const credentials = parseProcessArgs(stdout)
+    expect(credentials).toBeDefined()
+    expect(credentials).toMatchObject(expected)
+  })
+  test('including possible symbols in auth token', () => {
+    expected.password = 'R69he__CknTbq--uUFXyoE'
+    const stdout = `--app-port=12345 --remoting-auth-token=R69he__CknTbq--uUFXyoE --app-pid=1234`
+    parseProcessArgs(stdout)
+    const credentials = parseProcessArgs(stdout)
+    expect(credentials).toBeDefined()
+    expect(credentials).toMatchObject(expected)
+    expect(credentials).toEqual(expected)
+  })
+  test('unsafe cert', () => {
+    expected.certificate = undefined
+    const stdout = `--app-port=12345 --remoting-auth-token=R69heN3CknTbqW6uUFXyoE --app-pid=1234`
+    const credentials = parseProcessArgs(stdout, true)
+    expect(credentials).toBeDefined()
+    expect(credentials).toEqual(expected)
+    expect(credentials.certificate).toBeUndefined()
+  })
+  test('custom cert', () => {
+    expected.certificate = PLAINTEXT_CERT
+    const stdout = `--app-port=12345 --remoting-auth-token=R69heN3CknTbqW6uUFXyoE --app-pid=1234`
+    const credentials = parseProcessArgs(stdout, false, PLAINTEXT_CERT)
+    expect(credentials).toBeDefined()
+    expect(credentials).toEqual(expected)
+    expect(credentials.certificate).toEqual(expected.certificate)
+  })
+  test('error class returns invalid args', () => {
+    const stdout = `--app-port=abcde --remoting-auth-token=R69heN3CknTbqW6uUFXyoE --app-pid=1a34`
+    try {
+      parseProcessArgs(stdout)
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(ProcessArgsParsingError)
+      expect(e.rawStdout).toEqual(stdout)
+      expect(e.port).toBeUndefined()
+      expect(e.password).toEqual('R69heN3CknTbqW6uUFXyoE')
+      expect(e.pid).toBeUndefined()
+    }
+  })
+})
+
+/** Requires LCU to be open */
 describe('authenticating to the api', () => {
+  test('getting command line arguments', async () => {
+    const args = await getProcessArgs()
+    expect(args).toBeDefined()
+  })
   test('locating the league client', async () => {
     const credentials = await authenticate()
 

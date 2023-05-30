@@ -3,7 +3,9 @@ export {
   type AuthenticationOptions,
   type Credentials,
   ClientNotFoundError,
-  InvalidPlatformError
+  InvalidPlatformError,
+  ClientElevatedPermsError,
+  ProcessArgsParsingError
 } from './authentication.js'
 export { LeagueClient, type LeagueClientOptions } from './client.js'
 export { createHttp1Request, Http1Response } from './http.js'
@@ -13,7 +15,8 @@ export {
   ConnectionOptions,
   LeagueWebSocket,
   EventResponse,
-  EventCallback
+  EventCallback,
+  LeagueWebSocketInitError
 } from './websocket.js'
 export { DEPRECATED_request, DEPRECATED_RequestOptions, DEPRECATED_Response } from './request_deprecated.js'
 export { DEPRECATED_connect } from './websocket_deprecated.js'

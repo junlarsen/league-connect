@@ -1,8 +1,8 @@
-import cp from 'child_process'
-import util from 'util'
+import { exec as nodeExec } from 'child_process'
+import { promisify } from 'util'
 import { RIOT_GAMES_CERT } from './cert.js'
 
-const exec = util.promisify<typeof cp.exec.__promisify__>(cp.exec)
+const exec = promisify(nodeExec)
 
 const DEFAULT_NAME = 'LeagueClientUx'
 const DEFAULT_POLL_INTERVAL = 2500
@@ -114,6 +114,24 @@ export class ClientElevatedPermsError extends Error {
 }
 
 /**
+ * Indicates that the League Client process arguments could not be parsed
+ */
+export class ProcessArgsParsingError extends Error {
+  public readonly rawStdout: string | undefined
+  public readonly port: string | undefined
+  public readonly password: string | undefined
+  public readonly pid: string | undefined
+
+  constructor(rawStdout?: string, port?: string, password?: string, pid?: string) {
+    super('Failed to parse process arguments')
+    this.rawStdout = rawStdout
+    this.port = port
+    this.password = password
+    this.pid = pid
+  }
+}
+
+/**
  * Locates a League Client and retrieves the credentials for the LCU API
  * from the found process
  *
@@ -121,92 +139,111 @@ export class ClientElevatedPermsError extends Error {
  * rejection if a League Client is not running
  *
  * @param {AuthenticationOptions} [options] Authentication options, if any
- *
  * @throws InvalidPlatformError If the environment is not running
  * windows/linux/darwin
  * @throws ClientNotFoundError If the League Client could not be found
  * @throws ClientElevatedPermsError If the League Client is running as administrator and the script is not (Windows only)
  */
 export async function authenticate(options?: AuthenticationOptions): Promise<Credentials> {
-  async function tryAuthenticate() {
-    const name = options?.name ?? DEFAULT_NAME
-    const portRegex = /--app-port=([0-9]+)(?= *"| --)/
-    const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --)/
-    const pidRegex = /--app-pid=([0-9]+)(?= *"| --)/
-    const isWindows = process.platform === 'win32'
-
-    let command: string
-    if (!isWindows) {
-      command = `ps x -o args | grep '${name}'`
-    } else if (isWindows && options?.useDeprecatedWmic === true) {
-      command = `wmic process where caption='${name}.exe' get commandline`
-    } else {
-      command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
-    }
-
-    const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
-
-    try {
-      const { stdout: rawStdout } = await exec(command, executionOptions)
-      // TODO: investigate regression with calling .replace on rawStdout
-      // Remove newlines from stdout
-      const stdout = rawStdout.replace(/\n|\r/g, '')
-      const [, port] = stdout.match(portRegex)!
-      const [, password] = stdout.match(passwordRegex)!
-      const [, pid] = stdout.match(pidRegex)!
-      const unsafe = options?.unsafe === true
-      const hasCert = options?.certificate !== undefined
-
-      // See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
-      // If user specifies certificate, use it
-      const certificate = hasCert
-        ? options!.certificate
-        : // Otherwise: does the user want unsafe requests?
-        unsafe
-        ? undefined
-        : // Didn't specify, use our own certificate
-          RIOT_GAMES_CERT
-
-      return {
-        port: Number(port),
-        pid: Number(pid),
-        password,
-        certificate
-      }
-    } catch (err) {
-      if (options?.__internalDebug) console.error(err)
-      // Check if the user is running the client as an administrator leading to not being able to find the process
-      // Requires PowerShell 3.0 or higher
-      if (executionOptions.shell === 'powershell') {
-        const { stdout: isAdmin } = await exec(
-          `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`,
-          executionOptions
-        )
-        if (isAdmin.includes('True')) throw new ClientElevatedPermsError()
-      }
-      throw new ClientNotFoundError()
-    }
-  }
-
-  // Does not run windows/linux/darwin
+  // Check if the platform is supported (Winodows, Linux, Darwin/MacOS)
   if (!['win32', 'linux', 'darwin'].includes(process.platform)) {
     throw new InvalidPlatformError()
+  }
+
+  async function tryAuthenticate(): Promise<Credentials> {
+    const rawStdout = await getProcessArgs(options)
+    return parseProcessArgs(rawStdout, options?.unsafe, options?.certificate)
   }
 
   if (options?.awaitConnection) {
     // Poll until a client is found, attempting to resolve every
     // `options.pollInterval` milliseconds
+    const pollInterval = options?.pollInterval ?? DEFAULT_POLL_INTERVAL
     return new Promise(function self(resolve, reject) {
       tryAuthenticate()
-        .then((result) => {
-          resolve(result)
-        })
+        .then(resolve)
         .catch((err) => {
           if (err instanceof ClientElevatedPermsError) reject(err)
-          setTimeout(self, options?.pollInterval ?? DEFAULT_POLL_INTERVAL, resolve, reject)
+          setTimeout(self, pollInterval, resolve, reject)
         })
     })
+  }
+  return tryAuthenticate()
+}
+
+/**
+ * Retrieves the command line arguments for the League Client or options.name if provided.
+ *
+ * @param {AuthenticationOptions} [options] Authentication options provided by the user, if any
+ * @throws {ClientNotFoundError} If the League Client process is not found.
+ * @throws {ClientElevatedPermsError} If the user is running the client as an administrator, preventing process detection.
+ * @internal
+ */
+export async function getProcessArgs(options?: AuthenticationOptions): Promise<string> {
+  const name = options?.name ?? DEFAULT_NAME
+  const isWindows = process.platform === 'win32'
+
+  let command: string
+  if (!isWindows) {
+    command = `ps x -o args | grep '${name}'`
+  } else if (isWindows && options?.useDeprecatedWmic === true) {
+    command = `wmic process where caption='${name}.exe' get commandline`
   } else {
-    return tryAuthenticate()
+    command = `Get-CimInstance -Query "SELECT * from Win32_Process WHERE name LIKE '${name}.exe'" | Select-Object -ExpandProperty CommandLine`
+  }
+
+  const executionOptions = isWindows ? { shell: options?.windowsShell ?? ('powershell' as string) } : {}
+
+  try {
+    const { stdout: rawStdout } = await exec(command, executionOptions)
+    return rawStdout
+  } catch (err) {
+    if (options?.__internalDebug) console.error(err)
+    // Check if the user is running the client as an administrator leading to not being able to find the process
+    // Requires PowerShell 3.0 or higher
+    if (executionOptions.shell === 'powershell') {
+      const { stdout: isAdmin } = await exec(
+        `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`,
+        executionOptions
+      )
+      if (isAdmin.includes('True')) throw new ClientElevatedPermsError()
+    }
+    throw new ClientNotFoundError()
+  }
+}
+
+/**
+ * Process the command line arguments and return the credentials
+ *
+ * @param {string} rawStdout The raw stdout from the command line
+ * @param {boolean} [unsafe] Does the user want unsafe requests? Default: False
+ * @param {string} [cert] User specified certificate, if any
+ * @internal
+ */
+export function parseProcessArgs(rawStdout: string, unsafe: boolean = false, cert?: string): Credentials {
+  const portRegex = /--app-port=([0-9]+)(?= *"| --|$)/
+  const passwordRegex = /--remoting-auth-token=(.+?)(?= *"| --|$)/
+  const pidRegex = /--app-pid=([0-9]+)(?= *"| --|$)/
+
+  // Remove newlines from stdout
+  const stdout = rawStdout.replace(/\n|\r/g, '')
+  const port = stdout.match(portRegex)?.[1]
+  const password = stdout.match(passwordRegex)?.[1]
+  const pid = stdout.match(pidRegex)?.[1]
+  if (port === undefined || password === undefined || pid === undefined || isNaN(Number(port)) || isNaN(Number(pid)))
+    throw new ProcessArgsParsingError(rawStdout, port, password, pid)
+
+  /**
+   * If a user-provided certificate is available, use it. Otherwise, if unsafe requests are allowed, set it to undefined.
+   * Finally, if neither of those conditions are met, default to the Riot Games certificate.
+   * See flow chart for this here: https://github.com/matsjla/league-connect/pull/44#issuecomment-790384881
+   */
+  const certificate = cert ?? (unsafe ? undefined : RIOT_GAMES_CERT)
+
+  return {
+    port: Number(port),
+    pid: Number(pid),
+    password,
+    certificate
   }
 }
