@@ -3,6 +3,7 @@ export {
   type AuthenticationOptions,
   type Credentials,
   ClientNotFoundError,
+  ClientElevatedPermsError,
   InvalidPlatformError
 } from './authentication.js'
 export { LeagueClient, type LeagueClientOptions } from './client.js'
