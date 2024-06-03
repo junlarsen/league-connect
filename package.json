@@ -1,6 +1,6 @@
 {
   "name": "league-connect",
-  "version": "6.0.0-rc12",
+  "version": "6.0.0-rc13",
   "description": "Module for consuming the League of Legends Client APIs",
   "type": "module",
   "types": "dist/index.d.ts",
