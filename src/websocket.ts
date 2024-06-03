@@ -68,6 +68,18 @@ export class LeagueWebSocket extends WebSocket {
   }
 }
 
+/**
+ * Error thrown when the WebSocket initialization fails
+ */
+export class LeagueWebSocketInitError extends Error {
+  public readonly errorEvent: WebSocket.ErrorEvent
+
+  constructor(message: string, originalError: WebSocket.ErrorEvent) {
+    super(message)
+    this.errorEvent = originalError
+  }
+}
+
 export interface ConnectionOptions {
   /**
    * Options that will be used to authenticate to the LCU WebSocket API
@@ -96,25 +108,28 @@ export interface ConnectionOptions {
   __internalRetryCount?: number
 
   /**
-   * Mock faulty connections. Used internally.
-   * Value is the error message.
-   * @internal
-   */
-  __internalMockFaultyConnection?: string
-
-  /**
    * Callback function to be called when a mock faulty connection is made.
    * @internal
-   * */
+   */
   __internalMockCallback?: () => void
 }
 
 /**
+ * Error codes for the WebSocket connection
+ * @internal
+ */
+export enum ErrorCode {
+  NoConnectionTryAgain,
+  NoConnectionNoRetries,
+  NoConnectionMaxRetries,
+  OtherError
+}
+
+/**
  * Creates a WebSocket connection to the League Client
- * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
  *
- * @throws Error If the connection fails due to ECONNREFUSED
- * @throws WebSocket.ErrorEvent If the connection fails for any other reason
+ * @param {ConnectionOptions} [options] Options that will be used to authenticate to the League Client
+ * @throws {LeagueWebSocketInitError} Thrown when the WebSocket initialization fails
  */
 export async function createWebSocketConnection(options: ConnectionOptions = {}): Promise<LeagueWebSocket> {
   const credentials = await authenticate(options.authenticationOptions)
@@ -125,66 +140,67 @@ export async function createWebSocketConnection(options: ConnectionOptions = {})
       headers: {
         Authorization: 'Basic ' + Buffer.from(`riot:${credentials.password}`).toString('base64')
       },
+      // Use the certificate if it is provided, otherwise disable certificate verification
       agent: new https.Agent(
-        typeof credentials?.certificate === 'undefined'
-          ? {
-              rejectUnauthorized: false
-            }
-          : {
-              ca: credentials?.certificate
-            }
+        credentials?.certificate ? { ca: credentials?.certificate } : { rejectUnauthorized: false }
       )
     })
 
     // Handle connection errors
-    const errorHandler = (ws.onerror = (err) => {
-      // Set options to default values if they are not set
-      options.__internalRetryCount = options.__internalRetryCount ?? 0
-      options.pollInterval = options.pollInterval ?? 1000
-      options.maxRetries = options.maxRetries ?? 10
-
-      // Check if this is a test and if so, call the mock callback
-      if (options.__internalMockFaultyConnection && options.__internalMockCallback) {
-        if (err.message.includes('EndTestOpen') && options.__internalRetryCount >= options.maxRetries) resolve(ws)
-        options.__internalMockCallback?.()
-      }
-
-      // Close the connection if it's still open to make sure there's no memory leak.
+    ws.onerror = async (err) => {
       ws.close()
-
-      // Check if the error is a connection refused error. This is thrown when the LCU is starting but not completely ready yet.
-      if (err.message.includes('ECONNREFUSED')) {
-        options.__internalRetryCount++
-
-        // Check if the maximum number of retries has been reached and reject the promise if it has
-        if (options.maxRetries === 0) {
-          reject(new Error('Could not connect to LCU WebSocket API'))
-        } else if (options.maxRetries > 0 && options.__internalRetryCount > options.maxRetries) {
-          reject(new Error(`Could not connect to LCU WebSocket API after ${options.__internalRetryCount - 1} retries`))
-        } else {
-          // Wait for the poll interval and try again
-          setTimeout(() => {
-            resolve(createWebSocketConnection(options))
-          }, options.pollInterval)
-        }
-      } else {
-        reject(err)
-      }
-    })
-
-    // Check if this is a test and if so, emit an error.
-    // Requires waiting for the connection to be established since it's actually connecting to the LCU before emitting the error.
-    if (options.__internalMockFaultyConnection) {
-      ws.onopen = () => {
-        ws.emit('error', new Error(`${options.__internalMockFaultyConnection}`))
-        ws.removeListener('error', errorHandler)
-      }
-    } else {
-      // Remove the error handler once the connection is established and resolve the promise
-      ws.onopen = () => {
-        ws.removeListener('error', errorHandler)
-        resolve(ws)
+      const response = await errorHandler(err, options)
+      switch (response) {
+        case ErrorCode.NoConnectionTryAgain:
+          resolve(await createWebSocketConnection(options))
+        case ErrorCode.NoConnectionNoRetries:
+          reject(new LeagueWebSocketInitError('Could not connect to LCU WebSocket API', err))
+        case ErrorCode.NoConnectionMaxRetries:
+          reject(
+            new LeagueWebSocketInitError(
+              `Could not connect to LCU WebSocket API after ${options.__internalRetryCount} retries`,
+              err
+            )
+          )
+        default:
+          reject(new LeagueWebSocketInitError(err.message, err))
       }
     }
+
+    // Remove the error handler once the connection is established and resolve the promise
+    ws.onopen = () => {
+      ws.removeListener('error', errorHandler)
+      resolve(ws)
+    }
   })
+}
+
+/**
+ * Handle errors that occur when connecting to the LCU WebSocket API
+ *
+ * @param {Websocket.ErrorEvent} err The error that occurred
+ * @param {ConnectionOptions} options The options that were passed to the createWebSocketConnection function
+ * @internal
+ */
+export async function errorHandler(err: WebSocket.ErrorEvent, options: ConnectionOptions = {}): Promise<ErrorCode> {
+  // Set options to default values if they are not set
+  options.__internalRetryCount === undefined ? (options.__internalRetryCount = 0) : options.__internalRetryCount++
+  options.maxRetries = options.maxRetries ?? 10
+
+  if (options.__internalMockCallback) options.__internalMockCallback()
+
+  // Check if the error is a connection refused error. This is thrown when the LCU is starting but not completely ready yet.
+  if (err.message.includes('ECONNREFUSED')) {
+    // Check if the maximum number of retries has been reached and reject the promise if it has
+    if (options.maxRetries === 0) return ErrorCode.NoConnectionNoRetries
+    else if (options.maxRetries !== -1 && options.__internalRetryCount > options.maxRetries)
+      return ErrorCode.NoConnectionMaxRetries
+    else {
+      // Wait for the poll interval and try again
+      return new Promise((resolve) =>
+        setTimeout(() => resolve(ErrorCode.NoConnectionTryAgain), options.pollInterval ?? 1000)
+      )
+    }
+  }
+  return ErrorCode.OtherError
 }

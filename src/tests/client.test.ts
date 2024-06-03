@@ -7,9 +7,12 @@ describe('league client adapter', () => {
     const client = new LeagueClient(credentials)
 
     client.start()
-    setTimeout(() => {
-      client.stop()
-    }, 5000)
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        client.stop()
+        resolve()
+      }, 5000)
+    })
   }, 10_000)
 
   // Manual test
